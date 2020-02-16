@@ -141,7 +141,7 @@ class ProjectMessage extends Component {
               ]);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
         form.resetFields();
       }
     });
@@ -187,7 +187,7 @@ class ProjectMessage extends Component {
         }
       },
       iconType: 'delete',
-      onCancel() {}
+      onCancel() { }
     });
   };
 
@@ -235,6 +235,9 @@ class ProjectMessage extends Component {
     let initFormValues = {};
     const {
       name,
+      default_request_json,
+      default_request_json_schema,
+      default_response_json_schema,
       basepath,
       desc,
       project_type,
@@ -246,6 +249,9 @@ class ProjectMessage extends Component {
     } = projectMsg;
     initFormValues = {
       name,
+      default_request_json,
+      default_request_json_schema,
+      default_response_json_schema,
       basepath,
       desc,
       project_type,
@@ -377,7 +383,7 @@ class ProjectMessage extends Component {
                 </span>
               }
             >
-              <Input disabled value={mockUrl} onChange={() => {}} />
+              <Input disabled value={mockUrl} onChange={() => { }} />
             </FormItem>
 
             <FormItem {...formItemLayout} label="描述">
@@ -390,7 +396,60 @@ class ProjectMessage extends Component {
                 ]
               })(<TextArea rows={8} />)}
             </FormItem>
-
+            <FormItem
+              {...formItemLayout}
+              label={
+                <span>
+                  项目默认请求JSON&nbsp;
+                  <Tooltip title="项目默认请求报文是否为JSON">
+                    <Icon type="question-circle-o" />
+                  </Tooltip>
+                </span>
+              }
+            >
+              {getFieldDecorator('default_request_json', {
+                valuePropName: 'checked',
+                initialValue: initFormValues.default_request_json
+              })(<Switch checkedChildren="是" unCheckedChildren="否" />)}
+            </FormItem>
+            <FormItem
+              {...formItemLayout}
+              label={
+                <span>
+                  初始请求JSON-SCHEMA&nbsp;
+                  <Tooltip title="请求为JSON时默认初始化节点信息">
+                    <Icon type="question-circle-o" />
+                  </Tooltip>
+                </span>
+              }>
+              {getFieldDecorator('default_request_json_schema', {
+                initialValue: initFormValues.default_request_json_schema,
+                rules: [
+                  {
+                    required: false
+                  }
+                ]
+              })(<TextArea rows={4} />)}
+            </FormItem>
+            <FormItem
+              {...formItemLayout}
+              label={
+                <span>
+                  初始响应JSON-SCHEMA&nbsp;
+                  <Tooltip title="响应为JSON时默认初始化节点信息">
+                    <Icon type="question-circle-o" />
+                  </Tooltip>
+                </span>
+              }>
+              {getFieldDecorator('default_response_json_schema', {
+                initialValue: initFormValues.default_response_json_schema,
+                rules: [
+                  {
+                    required: false
+                  }
+                ]
+              })(<TextArea rows={4} />)}
+            </FormItem>
             <FormItem
               {...formItemLayout}
               label={
@@ -463,7 +522,7 @@ class ProjectMessage extends Component {
                     <Icon type="unlock" />公开<br />
                     <span className="radio-desc">任何人都可以索引并查看项目信息</span>
                   </Radio>}
-                  
+
                 </RadioGroup>
               )}
             </FormItem>

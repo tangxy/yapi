@@ -6,12 +6,12 @@ class projectModel extends baseModel {
     return 'project';
   }
 
-  constructor(){
+  constructor() {
     super()
     this.handleEnvNullData = this.handleEnvNullData.bind(this)
   }
 
-  getAuthList(uid){
+  getAuthList(uid) {
     return this.model.find({
       $or: [{
         'members.uid': uid,
@@ -23,13 +23,16 @@ class projectModel extends baseModel {
         project_type: 'public'
       }]
     }).select('group_id')
-    .exec();
+      .exec();
   }
 
   getSchema() {
     return {
       uid: { type: Number, required: true },
       name: { type: String, required: true },
+      default_request_json: { type: Boolean, default: true },
+      default_request_json_schema: { type: String },
+      default_response_json_schema: { type: String },
       basepath: { type: String },
       switch_notice: { type: Boolean, default: true },
       desc: String,
@@ -44,10 +47,12 @@ class projectModel extends baseModel {
           email_notice: { type: Boolean, default: true }
         }
       ],
-      env: [{ name: String, domain: String, header: Array, global: [{
-        name: String,
-        value: String
-      }] }],
+      env: [{
+        name: String, domain: String, header: Array, global: [{
+          name: String,
+          value: String
+        }]
+      }],
       icon: String,
       color: String,
       add_time: Number,
@@ -58,7 +63,7 @@ class projectModel extends baseModel {
       is_mock_open: { type: Boolean, default: false },
       strice: { type: Boolean, default: false },
       is_json5: { type: Boolean, default: true },
-      tag: [{name: String, desc: String}]
+      tag: [{ name: String, desc: String }]
     };
   }
 
@@ -81,14 +86,14 @@ class projectModel extends baseModel {
     return m.save();
   }
 
-  handleEnvNullData(data){
+  handleEnvNullData(data) {
     data = data.toObject();
-    data.toObject = ()=> data;
+    data.toObject = () => data;
     let isFix = false;
-    if(Array.isArray(data.env)){
-      data.env = data.env.map(item=>{
-        item.global = item.global.filter(g=>{
-          if(!g || typeof g !== 'object'){
+    if (Array.isArray(data.env)) {
+      data.env = data.env.map(item => {
+        item.global = item.global.filter(g => {
+          if (!g || typeof g !== 'object') {
             isFix = true;
             return false;
           }
@@ -97,8 +102,8 @@ class projectModel extends baseModel {
         return item;
       })
     }
-    
-    if(isFix){
+
+    if (isFix) {
       this.model.update(
         {
           _id: data._id
@@ -140,7 +145,7 @@ class projectModel extends baseModel {
   getBaseInfo(id, select) {
     select =
       select ||
-      '_id uid name basepath switch_notice desc group_id project_type env icon color add_time up_time pre_script after_script project_mock_script is_mock_open strice is_json5 tag';
+      '_id uid name default_request_json default_request_json_schema default_response_json_schema basepath switch_notice desc group_id project_type env icon color add_time up_time pre_script after_script project_mock_script is_mock_open strice is_json5 tag';
     return this.model
       .findOne({
         _id: id
@@ -176,7 +181,7 @@ class projectModel extends baseModel {
     return this.model
       .find(params)
       .select(
-        '_id uid name basepath switch_notice desc group_id project_type color icon env add_time up_time'
+        '_id uid name default_request_json default_request_json_schema default_response_json_schema basepath switch_notice desc group_id project_type color icon env add_time up_time'
       )
       .sort({ _id: -1 })
       .exec();

@@ -1,3 +1,10 @@
 {
-    "watch": ["server/", "common/", "plugins", "exts/"]
+    "watch": [
+        "server/",
+        "common/",
+        "plugins",
+        "exts/"
+    ],
+    "start": "node ./bin/www",
+    "debug": "nodemon --inspect ./bin/www"
 }

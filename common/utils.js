@@ -37,6 +37,12 @@ function simpleJsonPathParse(key, json) {
 
   return json;
 }
+// 驱动数据变量 {{ $value }}
+function handleVariableWord(word, json) {
+  if (!word || typeof word !== 'string' || word.indexOf('$') !== 0) return word;
+  let key = word.substr(1);
+  return json['dataVars'][key] || word;
+}
 
 // 全局变量 {{ global.value }}
 // value 是在环境变量中定义的字段
@@ -76,11 +82,13 @@ function handleJson(data, handleValueFn) {
 }
 
 function handleValueWithFilter(context) {
-  return function(match) {
+  return function (match) {
     if (match[0] === '@') {
       return handleMockWord(match);
     } else if (match.indexOf('$.') === 0) {
       return simpleJsonPathParse(match, context);
+    } else if (match.indexOf('$') === 0) {
+      return handleVariableWord(match, context);
     } else if (match.indexOf('global.') === 0) {
       return handleGlobalWord(match, context);
     } else {
@@ -169,15 +177,15 @@ function isJson(json) {
 
 exports.isJson = isJson;
 
-exports.unbase64 = function(base64Str) {
-    try {
-      return stringUtils.unbase64(base64Str);
-    } catch (err) {
-      return base64Str;
-    }
-  };
+exports.unbase64 = function (base64Str) {
+  try {
+    return stringUtils.unbase64(base64Str);
+  } catch (err) {
+    return base64Str;
+  }
+};
 
-exports.json_parse = function(json) {
+exports.json_parse = function (json) {
   try {
     return JSON.parse(json);
   } catch (err) {
@@ -185,7 +193,7 @@ exports.json_parse = function(json) {
   }
 };
 
-exports.json_format = function(json) {
+exports.json_format = function (json) {
   try {
     return JSON.stringify(JSON.parse(json), null, '   ');
   } catch (e) {
@@ -193,7 +201,7 @@ exports.json_format = function(json) {
   }
 };
 
-exports.ArrayToObject = function(arr) {
+exports.ArrayToObject = function (arr) {
   let obj = {};
   safeArray(arr).forEach(item => {
     obj[item.name] = item.value;
@@ -202,7 +210,7 @@ exports.ArrayToObject = function(arr) {
   return obj;
 };
 
-exports.timeago = function(timestamp) {
+exports.timeago = function (timestamp) {
   let minutes, hours, days, seconds, mouth, year;
   const timeNow = parseInt(new Date().getTime() / 1000);
   seconds = timeNow - timestamp;
@@ -249,7 +257,7 @@ exports.timeago = function(timestamp) {
 };
 
 // json schema 验证器
-exports.schemaValidator = function(schema, params) {
+exports.schemaValidator = function (schema, params) {
   try {
     const ajv = new Ajv({
       format: false,

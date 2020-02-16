@@ -61,7 +61,7 @@ let routerConfig = {
       method: 'get'
     },
 
-    
+
     {
       action: 'list',
       path: 'list',
@@ -498,7 +498,13 @@ let routerConfig = {
       action: 'getCaseEnvList',
       path: 'case_env_list',
       method: 'get'
+    },
+    {
+      action: 'getCaseDataList',
+      path: 'case_data_list',
+      method: 'get'
     }
+
   ],
   test: [
     {

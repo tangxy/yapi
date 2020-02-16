@@ -1,4 +1,5 @@
 const interfaceColModel = require('../models/interfaceCol.js');
+const interfaceColDataModel = require('../models/interfaceColData.js');
 const interfaceCaseModel = require('../models/interfaceCase.js');
 const interfaceModel = require('../models/interface.js');
 const projectModel = require('../models/project.js');
@@ -10,6 +11,7 @@ class interfaceColController extends baseController {
   constructor(ctx) {
     super(ctx);
     this.colModel = yapi.getInst(interfaceColModel);
+    this.colDataModel = yapi.getInst(interfaceColDataModel);
     this.caseModel = yapi.getInst(interfaceCaseModel);
     this.interfaceModel = yapi.getInst(interfaceModel);
     this.projectModel = yapi.getInst(projectModel);
@@ -43,7 +45,7 @@ class interfaceColController extends baseController {
         result[i] = result[i].toObject();
         let caseList = await this.caseModel.list(result[i]._id);
 
-        for(let j=0; j< caseList.length; j++){
+        for (let j = 0; j < caseList.length; j++) {
           let item = caseList[j].toObject();
           let interfaceData = await this.interfaceModel.getBaseinfo(item.interface_id);
           item.path = interfaceData.path;
@@ -54,7 +56,7 @@ class interfaceColController extends baseController {
           return a.index - b.index;
         });
         result[i].caseList = caseList;
-        
+
       }
       ctx.body = yapi.commons.resReturn(result);
     } catch (e) {
@@ -108,7 +110,7 @@ class interfaceColController extends baseController {
       yapi.commons.saveLog({
         content: `<a href="/user/profile/${this.getUid()}">${username}</a> 添加了接口集 <a href="/project/${
           params.project_id
-        }/interface/col/${result._id}">${params.name}</a>`,
+          }/interface/col/${result._id}">${params.name}</a>`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -189,6 +191,38 @@ class interfaceColController extends baseController {
         projectEnvList.push(result);
       }
       ctx.body = yapi.commons.resReturn(projectEnvList);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
+   * 获取一个接口集对应的所有测试驱动数据集
+   * @interface /col/case_data_list
+   * @method GET
+   * @category col
+   * @foldnumber 10
+   * @param {String} col_id 接口集id
+   * @returns {Object}
+   * @example
+   */
+  async getCaseDataList(ctx) {
+    try {
+      let id = ctx.query.col_id;
+      if (!id || id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'col_id不能为空'));
+      }
+
+      let colData = await this.colModel.get(id);
+      let project = await this.projectModel.getBaseInfo(colData.project_id);
+      if (project.project_type === 'private') {
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
+        }
+      }
+      // 通过col_id 找到 所有测试驱动数据
+      let colDataList = await this.colDataModel.list(id);
+      ctx.body = yapi.commons.resReturn(colDataList);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }
@@ -344,9 +378,9 @@ class interfaceColController extends baseController {
         yapi.commons.saveLog({
           content: `<a href="/user/profile/${this.getUid()}">${username}</a> 在接口集 <a href="/project/${
             params.project_id
-          }/interface/col/${params.col_id}">${col.name}</a> 下添加了测试用例 <a href="/project/${
+            }/interface/col/${params.col_id}">${col.name}</a> 下添加了测试用例 <a href="/project/${
             params.project_id
-          }/interface/case/${result._id}">${params.casename}</a>`,
+            }/interface/case/${result._id}">${params.casename}</a>`,
           type: 'project',
           uid: this.getUid(),
           username: username,
@@ -422,9 +456,9 @@ class interfaceColController extends baseController {
           yapi.commons.saveLog({
             content: `<a href="/user/profile/${this.getUid()}">${username}</a> 在接口集 <a href="/project/${
               params.project_id
-            }/interface/col/${params.col_id}">${col.name}</a> 下导入了测试用例 <a href="/project/${
+              }/interface/col/${params.col_id}">${col.name}</a> 下导入了测试用例 <a href="/project/${
               params.project_id
-            }/interface/case/${caseResultData._id}">${data.casename}</a>`,
+              }/interface/case/${caseResultData._id}">${data.casename}</a>`,
             type: 'project',
             uid: this.getUid(),
             username: username,
@@ -498,7 +532,7 @@ class interfaceColController extends baseController {
 
       const handleReplaceStr = str => {
         if (str.indexOf('$') !== -1) {
-          str = str.replace(/\$\.([0-9]+)\./g, function(match, p1) {
+          str = str.replace(/\$\.([0-9]+)\./g, function (match, p1) {
             p1 = p1.toString();
             return `$.${newCaseList[oldCaseObj[p1]]}.` || '';
           });
@@ -589,9 +623,9 @@ class interfaceColController extends baseController {
         yapi.commons.saveLog({
           content: `<a href="/user/profile/${this.getUid()}">${username}</a> 在接口集 <a href="/project/${
             caseData.project_id
-          }/interface/col/${caseData.col_id}">${col.name}</a> 更新了测试用例 <a href="/project/${
+            }/interface/col/${caseData.col_id}">${col.name}</a> 更新了测试用例 <a href="/project/${
             caseData.project_id
-          }/interface/case/${params.id}">${params.casename || caseData.casename}</a>`,
+            }/interface/case/${params.id}">${params.casename || caseData.casename}</a>`,
           type: 'project',
           uid: this.getUid(),
           username: username,
@@ -687,7 +721,7 @@ class interfaceColController extends baseController {
       yapi.commons.saveLog({
         content: `<a href="/user/profile/${this.getUid()}">${username}</a> 更新了测试集合 <a href="/project/${
           colData.project_id
-        }/interface/col/${id}">${colData.name}</a> 的信息`,
+          }/interface/col/${id}">${colData.name}</a> 的信息`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -720,7 +754,7 @@ class interfaceColController extends baseController {
       params.forEach(item => {
         if (item.id) {
           this.caseModel.upCaseIndex(item.id, item.index).then(
-            res => {},
+            res => { },
             err => {
               yapi.commons.log(err.message, 'error');
             }
@@ -754,7 +788,7 @@ class interfaceColController extends baseController {
       params.forEach(item => {
         if (item.id) {
           this.colModel.upColIndex(item.id, item.index).then(
-            res => {},
+            res => { },
             err => {
               yapi.commons.log(err.message, 'error');
             }
@@ -799,7 +833,7 @@ class interfaceColController extends baseController {
       yapi.commons.saveLog({
         content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了接口集 ${
           colData.name
-        } 及其下面的接口`,
+          } 及其下面的接口`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -838,7 +872,7 @@ class interfaceColController extends baseController {
         yapi.commons.saveLog({
           content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了接口集 <a href="/project/${
             caseData.project_id
-          }/interface/col/${caseData.col_id}">${col.name}</a> 下的接口 ${caseData.casename}`,
+            }/interface/col/${caseData.col_id}">${col.name}</a> 下的接口 ${caseData.casename}`,
           type: 'project',
           uid: this.getUid(),
           username: username,
@@ -861,7 +895,7 @@ class interfaceColController extends baseController {
   // 数组去重
   unique(array, compare) {
     let hash = {};
-    let arr = array.reduce(function(item, next) {
+    let arr = array.reduce(function (item, next) {
       hash[next[compare]] ? '' : (hash[next[compare]] = true && item.push(next));
       // console.log('item',item.project_id)
       return item;

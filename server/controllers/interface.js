@@ -261,6 +261,8 @@ class interfaceController extends baseController {
     }
     let project = await this.projectModel.getBaseInfo(params.project_id);
     handleInitRequestAndResponseBody(params, project);
+    // 再次调用, 以便能够正确添加请求未json时的接口头信息
+    handleHeaders(params);
     let data = Object.assign(params, {
       uid: this.getUid(),
       add_time: yapi.commons.time(),

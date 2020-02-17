@@ -13,11 +13,11 @@ export default class CaseData extends React.Component {
   }
 
   static propTypes = {
+    dataValue: PropTypes.number,
     dataList: PropTypes.array,
     currDataChange: PropTypes.func,
     changeClose: PropTypes.func,
-    collapseKey: PropTypes.any,
-    dataValue: PropTypes.object
+    collapseKey: PropTypes.any
   };
 
   callback = key => {
@@ -55,15 +55,15 @@ export default class CaseData extends React.Component {
                   style={{
                     width: '100%'
                   }}
-                  value=""
-                  defaultValue=""
+                  value={this.props.dataValue || '0'}
+                  defaultValue="0"
                   onChange={val => this.props.currDataChange(val)}
                 >
-                  <Option key="default" value="">
+                  <Option key="0" value="0">
                     无测试驱动数据
                   </Option>
                   {this.props.dataList.map(item => {
-                    return (<Option value={item.datas} key={item._id}>
+                    return (<Option value={item._id} key={item._id}>
                       {item.name}
                     </Option>);
                   })}

@@ -52,7 +52,6 @@ export default (state = initialState, action) => {
         currCaseList: action.payload.data.data
       };
     }
-
     case FETCH_VARIABLE_PARAMS_LIST: {
       return {
         ...state,
@@ -121,6 +120,7 @@ export function fetchCaseDataList(col_id) {
     })
   };
 }
+
 export function fetchVariableParamsList(colId) {
   return {
     type: FETCH_VARIABLE_PARAMS_LIST,

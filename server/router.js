@@ -503,6 +503,11 @@ let routerConfig = {
       action: 'getCaseDataList',
       path: 'case_data_list',
       method: 'get'
+    },
+    {
+      action: 'getCaseDriveData',
+      path: 'case_drive_data',
+      method: 'get'
     }
 
   ],

@@ -221,8 +221,45 @@ class interfaceColController extends baseController {
         }
       }
       // 通过col_id 找到 所有测试驱动数据
-      let colDataList = await this.colDataModel.list(id);
+      let colDataList = await this.colDataModel.list(id, '_id name');
       ctx.body = yapi.commons.resReturn(colDataList);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
+  * 获取一个接口集对应的测试驱动数据
+  * @interface /col/case_drive_data
+  * @method GET
+  * @category col
+  * @foldnumber 10
+  * @param {String} col_id 测试数据ID
+  * @param {String} case_data_id 测试数据ID
+  * @returns {Object}
+  * @example
+  */
+  async getCaseDriveData(ctx) {
+    try {
+      let col_id = ctx.query.col_id;
+      let case_data_id = ctx.query.case_data_id;
+      if (!col_id || col_id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'col_id不能为空'));
+      }
+      if (!case_data_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'case_data_id不能为空'));
+      }
+
+      let colData = await this.colModel.get(col_id);
+      let project = await this.projectModel.getBaseInfo(colData.project_id);
+      if (project.project_type === 'private') {
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
+        }
+      }
+      // 通过case_data_id 找到测试驱动数据
+      let colTestDriveData = await this.colDataModel.get(case_data_id);
+      ctx.body = yapi.commons.resReturn(colTestDriveData);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }

@@ -37,12 +37,13 @@ class interfaceColData extends baseModel {
     });
   }
 
-  list(col_id) {
+  list(col_id, select) {
+    select = select || '_id name uid col_id project_id add_time up_time, datas';
     return this.model
       .find({
         col_id: col_id
       })
-      .select('name uid col_id project_id add_time up_time, datas')
+      .select(select)
       .exec();
   }
 

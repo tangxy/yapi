@@ -61,6 +61,7 @@ function handleReport(json) {
       interfaceColList: state.interfaceCol.interfaceColList,
       currColId: state.interfaceCol.currColId,
       currCaseId: state.interfaceCol.currCaseId,
+      dataIdx: state.interfaceCol.dataIdx,
       isShowCol: state.interfaceCol.isShowCol,
       isRander: state.interfaceCol.isRander,
       currCaseList: state.interfaceCol.currCaseList,
@@ -95,6 +96,7 @@ class InterfaceColContent extends Component {
     history: PropTypes.object,
     currCaseList: PropTypes.array,
     currColId: PropTypes.number,
+    dataIdx: PropTypes.number,
     currCaseId: PropTypes.number,
     isShowCol: PropTypes.bool,
     isRander: PropTypes.bool,
@@ -115,7 +117,6 @@ class InterfaceColContent extends Component {
     super(props);
     this.reports = {};
     this.records = {};
-    this.dataVars = {};
     this.state = {
       rows: [],
       reports: {},
@@ -131,7 +132,6 @@ class InterfaceColContent extends Component {
       email: false,
       download: false,
       currColEnvObj: {},
-      currColDataObj: {},
       collapseKey: '1',
       commonSettingModalVisible: false,
       commonSetting: {
@@ -155,6 +155,7 @@ class InterfaceColContent extends Component {
   async handleColIdChange(newColId) {
     this.props.setColData({
       currColId: +newColId,
+      dataIdx: 0,
       isShowCol: true,
       isRander: false
     });
@@ -253,67 +254,84 @@ class InterfaceColContent extends Component {
     this.setState({ rows: newRows });
   };
 
-  executeTests = async () => {
-    let dataRows = JSON.parse(this.state.currColDataObj.datas)
-    for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
-      for (let i = 0, l = this.state.rows.length, newRows, curitem; i < l; i++) {
-        let { rows } = this.state;
+  getTestDriveData = async () => {
+    if (this.props.dataIdx === 0) {
+      return [{}];
+    }
+    let res = await axios.get('/api/col/case_drive_data?col_id=' + this.props.currColId + '&case_data_id=' + this.props.dataIdx);
+    if (!res.data.errcode) {
+      let dataRows = JSON.parse(res.data.data.datas);
+      return dataRows;
+    } else {
+      message.error(res.data.errmsg);
+      return [{}];
+    }
 
-        let envItem = _.find(this.props.envList, item => {
-          return item._id === rows[i].project_id;
-        });
+  };
+  executeOneTests = async (dataVars) => {
+    for (let i = 0, l = this.state.rows.length, newRows, curitem; i < l; i++) {
+      let { rows } = this.state;
 
-        curitem = Object.assign(
-          {},
-          rows[i],
-          {
-            env: envItem.env,
-            pre_script: this.props.currProject.pre_script,
-            after_script: this.props.currProject.after_script
-          },
-          { test_status: 'loading' },
-          { dataVars: dataRows[rowIdx] }
-        );
-        newRows = [].concat([], rows);
-        newRows[i] = curitem;
-        this.setState({ rows: newRows });
-        let status = 'error',
-          result;
-        try {
-          result = await this.handleTest(curitem);
+      let envItem = _.find(this.props.envList, item => {
+        return item._id === rows[i].project_id;
+      });
 
-          if (result.code === 400) {
-            status = 'error';
-          } else if (result.code === 0) {
-            status = 'ok';
-          } else if (result.code === 1) {
-            status = 'invalid';
-          }
-        } catch (e) {
-          console.error(e);
+      curitem = Object.assign(
+        {},
+        rows[i],
+        {
+          env: envItem.env,
+          pre_script: this.props.currProject.pre_script,
+          after_script: this.props.currProject.after_script
+        },
+        { test_status: 'loading' },
+        { dataVars: dataVars }
+      );
+      newRows = [].concat([], rows);
+      newRows[i] = curitem;
+      this.setState({ rows: newRows });
+      let status = 'error',
+        result;
+      try {
+        result = await this.handleTest(curitem);
+
+        if (result.code === 400) {
           status = 'error';
-          result = e;
+        } else if (result.code === 0) {
+          status = 'ok';
+        } else if (result.code === 1) {
+          status = 'invalid';
         }
-
-        //result.body = result.data;
-        this.reports[curitem._id] = result;
-        this.records[curitem._id] = {
-          status: result.status,
-          params: result.params,
-          body: result.res_body
-        };
-
-        curitem = Object.assign({}, rows[i], { test_status: status });
-        newRows = [].concat([], rows);
-        newRows[i] = curitem;
-        this.setState({ rows: newRows });
+      } catch (e) {
+        console.error(e);
+        status = 'error';
+        result = e;
       }
+
+      //result.body = result.data;
+      this.reports[curitem._id] = result;
+      this.records[curitem._id] = {
+        status: result.status,
+        params: result.params,
+        body: result.res_body
+      };
+
+      curitem = Object.assign({}, rows[i], { test_status: status });
+      newRows = [].concat([], rows);
+      newRows[i] = curitem;
+      this.setState({ rows: newRows });
+    }
+  }
+
+  executeTests = async () => {
+    let dataRows = await this.getTestDriveData();
+    for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
+      await this.executeOneTests(dataRows[rowIdx]);
       await axios.post('/api/col/up_col', {
         col_id: this.props.currColId,
         test_report: JSON.stringify(this.reports)
       });
     }
-
   };
 
   handleTest = async interfaceData => {
@@ -512,7 +530,8 @@ class InterfaceColContent extends Component {
     } else {
       this.setState({
         collapseKey: '1',
-        currColEnvObj: {}
+        currColEnvObj: {},
+        dataIdx: 0
       });
     }
   };
@@ -579,14 +598,10 @@ class InterfaceColContent extends Component {
     this.handleColdata(this.props.currCaseList, currColEnvObj);
   };
 
-  currDataChange = (datas) => {
-
-    let currColDataObj = {
-      ...this.state.currColDataObj,
-      datas: datas
-    };
-    this.setState({ currColDataObj });
-    //this.handleColdata(this.props.currCaseList, currColDataObj);
+  currDataChange = (dataIdx) => {
+    this.props.setColData({
+      dataIdx: dataIdx
+    });
   };
 
   autoTests = () => {
@@ -1062,9 +1077,9 @@ class InterfaceColContent extends Component {
           <Col span={1}></Col>
           <Col span={6}>
             <CaseData
+              dataValue={this.props.dataIdx}
               dataList={this.props.dataList}
               currDataChange={this.currDataChange}
-              dataValue={this.state.currColDataObj}
               collapseKey={this.state.collapseKey}
               changeClose={this.changeCollapseClose}
             />
@@ -1097,19 +1112,18 @@ class InterfaceColContent extends Component {
                   开始测试
                 </Button>
               </div>
-            ) : (
-                <Tooltip title="请安装 cross-request Chrome 插件">
-                  <Button
-                    disabled
-                    type="primary"
-                    style={{
-                      float: 'right',
-                      marginTop: '8px'
-                    }}
-                  >
-                    开始测试
-                </Button>
-                </Tooltip>
+            ) : (<Tooltip title="请安装 cross-request Chrome 插件">
+              <Button
+                disabled
+                type="primary"
+                style={{
+                  float: 'right',
+                  marginTop: '8px'
+                }}
+              >
+                开始测试
+              </Button>
+            </Tooltip>
               )}
           </Col>
         </Row>

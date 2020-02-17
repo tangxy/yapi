@@ -387,6 +387,11 @@ let routerConfig = {
       action: 'schema2json',
       path: 'schema2json',
       method: 'post'
+    },
+    {
+      action: 'schema2jsonRaw',
+      path: 'schema2jsonraw',
+      method: 'post'
     }
   ],
   log: [

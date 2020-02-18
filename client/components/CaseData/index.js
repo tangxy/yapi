@@ -2,7 +2,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Select, Collapse, Icon, Tooltip } from 'antd';
+import { Button, Select, Collapse, Icon, Tooltip } from 'antd';
 const Option = Select.Option;
 const Panel = Collapse.Panel;
 import './index.scss';
@@ -67,6 +67,11 @@ export default class CaseData extends React.Component {
                       {item.name}
                     </Option>);
                   })}
+                  <Option value="测试数据配置" disabled style={{ cursor: 'pointer', color: '#2395f1' }}>
+                    <Button type="primary" onClick={console.log("click 测试数据配置")}>
+                      测试数据配置
+                    </Button>
+                  </Option>
                 </Select>
               </div>
             )}

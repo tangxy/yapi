@@ -59,10 +59,25 @@ exports.schemaToJson = function (schema, options = {}) {
   jsf.option(defaultOptions);
   return result;
 };
-
+// 临时替换字段中的设置的最大长度，避免生成的表达式 (例如:"{{ @date }}") 超过字段定义最大长度被截断
+function replaceMaxLengthInSchema(schemaObject) {
+  if (!schemaObject) {
+    return schemaObject;
+  }
+  if (typeof schemaObject === 'object') {
+    for (let i in schemaObject) {
+      if (i === "maxLength") {
+        schemaObject[i] = 1000;
+      } else {
+        schemaObject[i] = replaceMaxLengthInSchema(schemaObject[i]);
+      }
+    }
+  }
+  return schemaObject;
+}
 exports.schemaToJsonRaw = function (schema, options = {}) {
+  schema = replaceMaxLengthInSchema(schema);
   Object.assign(options, defaultOptions);
-
   jsf.extend('mock', function () {
     return {
       mock: function (xx) {

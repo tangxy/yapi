@@ -15,7 +15,6 @@ const showDiffMsg = require('../../common/diff-view.js');
 const mergeJsonSchema = require('../../common/mergeJsonSchema');
 const fs = require('fs-extra');
 const path = require('path');
-
 // const annotatedCss = require("jsondiffpatch/public/formatters-styles/annotated.css");
 // const htmlCss = require("jsondiffpatch/public/formatters-styles/html.css");
 
@@ -1199,6 +1198,8 @@ class interfaceController extends baseController {
     });
     return (ctx.body = res);
   }
+
+
 
   async schema2jsonRaw(ctx) {
     let schema = ctx.request.body.schema;

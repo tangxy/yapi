@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import 'antd/dist/antd.css';
 import './ProjectTestData.scss';
 import PropTypes from 'prop-types';
+import { uuidv1 } from 'uuid/v1';
 import { Form, Row, Col, Table, Divider, Button, Select, Input, Popconfirm } from 'antd';
 const FormItem = Form.Item;
 const Option = Select.Option;
@@ -62,6 +63,7 @@ class EditableTable extends Component {
       />
     );
   }
+
   handleChange(value, key, column) {
     const newData = [...this.state.data];
     const target = newData.filter(item => key === item.key)[0];
@@ -96,9 +98,57 @@ class EditableTable extends Component {
       this.setState({ data: newData });
     }
   }
+
+  handleDelete(key) {
+    const newData = [...this.state.data];
+    this.setState({ data: newData.filter(item => item.key !== key) });
+  }
+  handleAddCol = e => {
+    e.preventDefault();
+    console.log("handleAddCol");
+  };
+
+  handleDelCol = e => {
+    e.preventDefault();
+    console.log("handleDelCol");
+  };
+
+  handleAddRow = e => {
+    e.preventDefault();
+    const newData = [...this.state.data];
+    const { columns } = this.state;
+    let newRow = {};
+    for (let i = 0; i < columns.length; i++) {
+      let element = columns[i];
+      if (element.dataIndex === 'key') {
+        newRow[element.dataIndex] = Date.parse(new Date());
+      } else {
+        newRow[element.dataIndex] = "";
+      }
+    }
+    console.log(newRow);
+    let merged = newData.concat(newRow);
+    this.setState({
+      data: merged
+    });
+  };
+
+  handleImportCSV = e => {
+    e.preventDefault();
+    console.log("handleImportCSV");
+  };
+  handleExportCSV = e => {
+    e.preventDefault();
+    console.log("hanhandleExportCSV");
+  };
+
+  handleSave = e => {
+    e.preventDefault();
+    console.log("handle save");
+    const newData = [...this.state.data];
+    console.log(newData);
+  };
   render() {
-
-
     const { columns, data } = this.state;
     let columnsWithRender = [];
     for (let i = 0; i < columns.length; i++) {
@@ -145,7 +195,7 @@ class EditableTable extends Component {
     return (
       <div>
         <Row gutter={24}>
-          <Col span={6}>
+          <Col span={5}>
             <FormItem {...formItemLayout} required={false} label="名称">
               <Input value={testDataItem.name}
                 onChange={e => this.props.handleNameInput(e.target.value)}
@@ -153,7 +203,7 @@ class EditableTable extends Component {
               />
             </FormItem>
           </Col>
-          <Col span={6}>
+          <Col span={5}>
             <FormItem {...formItemLayout} required={false} label="范围">
               <Select value="0" defaultValue="0">
                 <Option key="0" value="0">
@@ -162,13 +212,14 @@ class EditableTable extends Component {
               </Select>
             </FormItem>
           </Col>
-          <Col span={12}>
+          <Col span={14}>
             <div>
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAdd}>添加列</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAdd}>添加行</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAdd}>导入csv</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAdd}>导出csv</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAdd}>保存</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAddCol}>添加列</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleDelCol}>删除列</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAddRow}>添加行</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleImportCSV}>导入csv</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleExportCSV}>导出csv</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleSave}>保存</Button>
             </div>
           </Col>
         </Row>

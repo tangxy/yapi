@@ -10,7 +10,8 @@ import {
   fetchCaseList,
   setColData,
   fetchCaseEnvList,
-  fetchCaseDataList
+  fetchCaseDataList,
+  fetchCaseTestData
 } from '../../../../reducer/modules/interfaceCol';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { getToken, getEnv } from '../../../../reducer/modules/project';
@@ -69,6 +70,7 @@ function handleReport(json) {
       token: state.project.token,
       envList: state.interfaceCol.envList,
       dataList: state.interfaceCol.dataList,
+      testData: state.interfaceCol.testData,
       curProjectRole: state.project.currProject.role,
       projectEnv: state.project.projectEnv,
       curUid: state.user.uid
@@ -81,7 +83,8 @@ function handleReport(json) {
     getToken,
     getEnv,
     fetchCaseEnvList,
-    fetchCaseDataList
+    fetchCaseDataList,
+    fetchCaseTestData
   }
 )
 @withRouter
@@ -108,6 +111,7 @@ class InterfaceColContent extends Component {
     projectEnv: PropTypes.object,
     fetchCaseEnvList: PropTypes.func,
     fetchCaseDataList: PropTypes.func,
+    fetchCaseTestData: PropTypes.func,
     envList: PropTypes.array,
     dataList: PropTypes.array,
     curUid: PropTypes.number
@@ -173,7 +177,7 @@ class InterfaceColContent extends Component {
 
     await this.props.fetchCaseList(newColId);
     await this.props.fetchCaseEnvList(newColId);
-    await this.props.fetchCaseDataList(newColId);
+    await this.props.fetchCaseDataList(this.props.match.params.id, newColId);
     this.changeCollapseClose();
     this.handleColdata(this.props.currCaseList);
   }
@@ -258,15 +262,14 @@ class InterfaceColContent extends Component {
     if (this.props.dataIdx === 0) {
       return [{}];
     }
-    let res = await axios.get('/api/col/case_drive_data?col_id=' + this.props.currColId + '&case_data_id=' + this.props.dataIdx);
-    if (!res.data.errcode) {
-      let dataRows = JSON.parse(res.data.data.datas);
+    await this.props.fetchCaseTestData(this.props.match.params.id, this.props.dataIdx);
+    try {
+      let dataRows = JSON.parse(this.state.testData.datas);
       return dataRows;
-    } else {
-      message.error(res.data.errmsg);
+    } catch (e) {
+      console.error(e);
       return [{}];
     }
-
   };
   executeOneTests = async (dataVars) => {
     for (let i = 0, l = this.state.rows.length, newRows, curitem; i < l; i++) {

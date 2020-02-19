@@ -14,6 +14,7 @@ class interfaceColData extends baseModel {
       project_id: { type: Number, required: true },
       add_time: Number,
       up_time: Number,
+      columns: { type: String },
       datas: { type: String }
     };
   }
@@ -37,11 +38,20 @@ class interfaceColData extends baseModel {
     });
   }
 
-  list(col_id, select) {
-    select = select || '_id name uid col_id project_id add_time up_time, datas';
+  list(project_id, col_id, select) {
+    select = select || '_id name uid col_id project_id add_time up_time,columns, datas';
+    if (col_id) {
+      return this.model
+        .find({
+          project_id: project_id,
+          col_id: col_id
+        })
+        .select(select)
+        .exec();
+    }
     return this.model
       .find({
-        col_id: col_id
+        project_id: project_id
       })
       .select(select)
       .exec();

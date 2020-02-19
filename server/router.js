@@ -510,8 +510,8 @@ let routerConfig = {
       method: 'get'
     },
     {
-      action: 'getCaseDriveData',
-      path: 'case_drive_data',
+      action: 'getCaseTestData',
+      path: 'case_test_data',
       method: 'get'
     }
 

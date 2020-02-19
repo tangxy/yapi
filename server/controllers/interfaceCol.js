@@ -208,20 +208,19 @@ class interfaceColController extends baseController {
    */
   async getCaseDataList(ctx) {
     try {
-      let id = ctx.query.col_id;
-      if (!id || id == 0) {
-        return (ctx.body = yapi.commons.resReturn(null, 407, 'col_id不能为空'));
+      let project_id = ctx.query.project_id;
+      if (!project_id || project_id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'project_id不能为空'));
       }
-
-      let colData = await this.colModel.get(id);
-      let project = await this.projectModel.getBaseInfo(colData.project_id);
+      let col_id = ctx.query.col_id;
+      let project = await this.projectModel.getBaseInfo(project_id);
       if (project.project_type === 'private') {
         if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
           return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
         }
       }
       // 通过col_id 找到 所有测试驱动数据
-      let colDataList = await this.colDataModel.list(id, '_id name');
+      let colDataList = await this.colDataModel.list(project_id, col_id, '_id name');
       ctx.body = yapi.commons.resReturn(colDataList);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
@@ -230,7 +229,7 @@ class interfaceColController extends baseController {
 
   /**
   * 获取一个接口集对应的测试驱动数据
-  * @interface /col/case_drive_data
+  * @interface /col/case_test_data
   * @method GET
   * @category col
   * @foldnumber 10
@@ -239,19 +238,17 @@ class interfaceColController extends baseController {
   * @returns {Object}
   * @example
   */
-  async getCaseDriveData(ctx) {
+  async getCaseTestData(ctx) {
     try {
-      let col_id = ctx.query.col_id;
+      let project_id = ctx.query.project_id;
       let case_data_id = ctx.query.case_data_id;
-      if (!col_id || col_id == 0) {
-        return (ctx.body = yapi.commons.resReturn(null, 407, 'col_id不能为空'));
+      if (!project_id || project_id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'project_id不能为空'));
       }
       if (!case_data_id) {
         return (ctx.body = yapi.commons.resReturn(null, 407, 'case_data_id不能为空'));
       }
-
-      let colData = await this.colModel.get(col_id);
-      let project = await this.projectModel.getBaseInfo(colData.project_id);
+      let project = await this.projectModel.getBaseInfo(project_id);
       if (project.project_type === 'private') {
         if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
           return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));

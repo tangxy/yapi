@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import './ProjectTestData.scss';
 import { Icon, Layout, Tooltip, message, Row, Popconfirm } from 'antd';
+import axios from 'axios';
 const { Content, Sider } = Layout;
 import { connect } from 'react-redux';
 import { updateEnv, getProject, getEnv } from '../../../../reducer/modules/project';
-import { fetchCaseDataList, fetchCaseTestData } from '../../../../reducer/modules/interfaceCol';
-import EasyDragSort from '../../../../components/EasyDragSort/EasyDragSort.js';
+import { fetchCaseDataList, fetchCaseTestData, fetchColSimpleList, updateCaseTestData } from '../../../../reducer/modules/interfaceCol';
 import EditableTable from './EditableTable.js';
 
 @connect(
@@ -14,24 +14,31 @@ import EditableTable from './EditableTable.js';
     return {
       projectMsg: state.project.currProject,
       dataList: state.interfaceCol.dataList,
-      testData: state.interfaceCol.testData
+      testData: state.interfaceCol.testData,
+      colList: state.interfaceCol.colList
     };
   },
   {
     fetchCaseDataList,
     fetchCaseTestData,
+    fetchColSimpleList,
+    updateCaseTestData,
     updateEnv,
     getProject,
     getEnv
   }
 )
+
 class ProjectTestData extends Component {
   static propTypes = {
     match: PropTypes.object,
     dataList: PropTypes.array,
+    colList: PropTypes.array,
     testData: PropTypes.object,
     fetchCaseDataList: PropTypes.func,
     fetchCaseTestData: PropTypes.func,
+    fetchColSimpleList: PropTypes.func,
+    updateCaseTestData: PropTypes.func,
     onOk: PropTypes.func,
     updateEnv: PropTypes.func,
     getProject: PropTypes.func,
@@ -42,6 +49,7 @@ class ProjectTestData extends Component {
     super(props);
     this.state = {
       dataList: [],
+      colList: [],
       testData: {},
       columns: [],
       datas: [],
@@ -52,9 +60,10 @@ class ProjectTestData extends Component {
     };
   }
 
-  initState(curdata, id) {
+  initState(curdata, colList, id) {
     let newValue = {};
     newValue['dataList'] = [].concat(curdata);
+    newValue['colList'] = [].concat(colList);
     newValue['_id'] = id;
     this.setState({
       ...this.state,
@@ -65,7 +74,8 @@ class ProjectTestData extends Component {
   async componentWillMount() {
     this._isMounted = true;
     await this.props.fetchCaseDataList(this.props.match.params.id);
-    this.initState(this.props.dataList, this.props.match.params.id)
+    await this.props.fetchColSimpleList(this.props.match.params.id);
+    this.initState(this.props.dataList, this.props.colList, this.props.match.params.id)
     await this.handleClick(0, this.props.dataList[0]);
   }
 
@@ -76,14 +86,16 @@ class ProjectTestData extends Component {
 
   async getTestDriveData(project_id, case_data_id) {
     try {
-      await this.props.fetchCaseTestData(project_id, case_data_id);
-      let columns = JSON.parse(this.props.testData.columns);
-      let datas = JSON.parse(this.props.testData.datas);
-      this.setState({
-        columns: columns,
-        datas: datas
-      });
-
+      if (case_data_id) {
+        await this.props.fetchCaseTestData(project_id, case_data_id);
+        let columns = JSON.parse(this.props.testData.columns);
+        let datas = JSON.parse(this.props.testData.datas);
+        this.setState({
+          columns: columns,
+          datas: datas,
+          currentColletionId: this.props.testData.col_id
+        });
+      }
     } catch (e) {
       console.error(e);
     }
@@ -98,22 +110,34 @@ class ProjectTestData extends Component {
   }
 
   // 增加测试数据变量项
-  addParams = (name, data) => {
-    let newValue = {};
-    data = { name: '新测试数据' };
-    newValue[name] = [].concat(data, this.state[name]);
-    this.setState(newValue);
-    this.handleClick(0, data);
+  addTestData = (name, data) => {
+    console.log(data);
+    let assignValue = {
+      project_id: this.props.match.params.id,
+      name: '新测试数据',
+      col_id: 0,
+      columns: '["key"]',
+      datas: '[]'
+    };
+    this.onSave(assignValue, "添加成功");
+    this.handleClick(0, assignValue);
   };
 
   // 删除提示信息
-  showConfirm(key, name) {
-    let assignValue = this.delParams(key, name);
-    this.onSave(assignValue);
-  }
+  showConfirm = async (key, currentTestDataItem) => {
+    try {
+      let res = await axios.post('/api/col/del_test_data', { case_data_id: currentTestDataItem._id, project_id: this.props.match.params.id });
+      if (res.data.errcode === 0) {
+        message.success('删除成功');
+        this.reloadCaseDataList();
+      }
+    } catch (e) {
+      message.error('测试数据删除不成功 ');
+    }
+  };
 
   // 删除测试数据变量项
-  delParams = (key, name) => {
+  delTestData = (key, name) => {
     let curValue = this.state.dataList;
     let newValue = {};
     newValue[name] = curValue.filter((val, index) => {
@@ -130,31 +154,28 @@ class ProjectTestData extends Component {
   };
 
   // 保存设置
-  async onSave(assignValue) {
-    await this.props
-      .updateEnv(assignValue)
-      .then(res => {
-        if (res.payload.data.errcode == 0) {
-          this.props.getProject(this.props.match.params.id);
-          this.props.getEnv(this.props.match.params.id);
-          message.success('修改成功! ');
-          if (this._isMounted) {
-            this.setState({ ...assignValue });
-          }
-        }
-      })
-      .catch(() => {
-        message.error('测试数据设置不成功 ');
-      });
-  }
-
+  onSave = async (assignValue, msg) => {
+    try {
+      let res = await this.props.updateCaseTestData(assignValue);
+      if (res.payload.data.errcode == 0) {
+        message.success(msg);
+        await this.reloadCaseDataList();
+      }
+    } catch (e) {
+      message.error('测试数据设置不成功');
+    }
+  };
+  reloadCaseDataList = async () => {
+    await this.props.fetchCaseDataList(this.props.match.params.id);
+    await this.props.fetchColSimpleList(this.props.match.params.id);
+    this.initState(this.props.dataList, this.props.colList, this.props.match.params.id)
+    this.handleClick(0, this.props.dataList[0]);
+  };
   //  提交保存信息
   onSubmit = (value, index) => {
-    let assignValue = {};
-    assignValue['dataList'] = [].concat(this.state.dataList);
-    assignValue['dataList'].splice(index, 1, value['dataList']);
-    assignValue['_id'] = this.state._id;
-    this.onSave(assignValue);
+    let assignValue = value;
+    assignValue['project_id'] = this.props.match.params.id;
+    this.onSave(assignValue, "保存成功");
     this.props.onOk && this.props.onOk(assignValue['dataList'], index);
   };
 
@@ -165,18 +186,6 @@ class ProjectTestData extends Component {
     this.setState({ dataList: newValue });
   };
 
-  // 侧边栏拖拽
-  handleDragMove = name => {
-    return (data, from, to) => {
-      let newValue = {
-        [name]: data
-      };
-      this.setState(newValue);
-      newValue['_id'] = this.state._id;
-      this.handleClick(to, newValue[name][to]);
-      this.onSave(newValue);
-    };
-  };
 
   render() {
     const { dataList, currentKey } = this.state;
@@ -197,7 +206,7 @@ class ProjectTestData extends Component {
               title="您确认删除此测试数据?"
               onConfirm={e => {
                 e.stopPropagation();
-                this.showConfirm(index, 'dataList');
+                this.showConfirm(index, item);
               }}
               okText="确定"
               cancelText="取消"
@@ -228,20 +237,22 @@ class ProjectTestData extends Component {
                     </Tooltip>
                   </h3>
                   <Tooltip title="添加测试数据">
-                    <Icon type="plus" onClick={() => this.addParams('dataList')} />
+                    <Icon type="plus" onClick={() => this.addTestData('dataList')} />
                   </Tooltip>
                 </div>
               </Row>
-              <EasyDragSort data={() => dataList} onChange={this.handleDragMove('dataList')}>
+              <div>
                 {dataSettingItems}
-              </EasyDragSort>
+              </div>
             </div>
           </Sider>
           <Layout className="data-content">
             <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}>
-              <EditableTable testDataItem={this.state.currentTestDataItem}
+              <EditableTable currTestData={this.state.currentTestDataItem}
                 dataSource={this.state.datas}
                 columns={this.state.columns}
+                colList={this.state.colList}
+                currentColletionId={this.state.currentColletionId}
                 onSubmit={e => this.onSubmit(e, currentKey)}
                 handleNameInput={e => this.handleInputChange(e, currentKey)} />
             </Content>

@@ -3,8 +3,9 @@ import React, { Component } from 'react';
 import 'antd/dist/antd.css';
 import './ProjectTestData.scss';
 import PropTypes from 'prop-types';
-import { uuidv1 } from 'uuid/v1';
-import { Form, Row, Col, Table, Divider, Button, Select, Input, Popconfirm } from 'antd';
+import { v4 as uuidv4 } from 'uuid';
+import { Form, Row, Col, Table, Divider, Button, Select, Input, Popconfirm, Modal } from 'antd';
+import AddColumnForm from './AddColumnForm.js';
 const FormItem = Form.Item;
 const Option = Select.Option;
 
@@ -34,24 +35,31 @@ const EditableCell = ({ editable, value, onChange }) => (
 
 class EditableTable extends Component {
   static propTypes = {
-    testDataItem: PropTypes.object,
+    currTestData: PropTypes.object,
+    colList: PropTypes.array,
     columns: PropTypes.array,
     dataSource: PropTypes.array,
     form: PropTypes.object,
     onSubmit: PropTypes.func,
-    handleNameInput: PropTypes.func
+    handleNameInput: PropTypes.func,
+    addColumnVisable: false,
+    currentColletionId: PropTypes.number
   };
   constructor(props) {
     super(props);
     this.state = {
       data: props.dataSource,
-      columns: props.columns
+      columns: props.columns,
+      testDataName: props.currTestData.name,
+      currentColletionId: props.currentColletionId
     }
   }
   componentWillReceiveProps(nextProps) {
     this.setState({
       data: nextProps.dataSource,
-      columns: nextProps.columns
+      columns: nextProps.columns,
+      testDataName: nextProps.currTestData.name,
+      currentColletionId: nextProps.currentColletionId
     });
   }
   renderColumns(text, record, column) {
@@ -63,7 +71,9 @@ class EditableTable extends Component {
       />
     );
   }
-
+  handlerApplyCollectionChange(val) {
+    this.setState({ currentColletionId: val });
+  }
   handleChange(value, key, column) {
     const newData = [...this.state.data];
     const target = newData.filter(item => key === item.key)[0];
@@ -80,7 +90,7 @@ class EditableTable extends Component {
       this.setState({ data: newData });
     }
   }
-  save(key) {
+  ok(key) {
     const newData = [...this.state.data];
     const target = newData.filter(item => key === item.key)[0];
     if (target) {
@@ -105,7 +115,7 @@ class EditableTable extends Component {
   }
   handleAddCol = e => {
     e.preventDefault();
-    console.log("handleAddCol");
+    this.setState({ addColumnVisable: true });
   };
 
   handleDelCol = e => {
@@ -113,6 +123,12 @@ class EditableTable extends Component {
     console.log("handleDelCol");
   };
 
+  handleAddColumn = (columnName) => {
+    let { columns } = this.state;
+    let newColumns = [].concat(columnName);
+    newColumns = newColumns.concat(columns);
+    this.setState({ addColumnVisable: false, columns: newColumns });
+  }
   handleAddRow = e => {
     e.preventDefault();
     const newData = [...this.state.data];
@@ -120,13 +136,12 @@ class EditableTable extends Component {
     let newRow = {};
     for (let i = 0; i < columns.length; i++) {
       let element = columns[i];
-      if (element.dataIndex === 'key') {
-        newRow[element.dataIndex] = Date.parse(new Date());
+      if (element === 'key') {
+        newRow[element] = uuidv4();
       } else {
-        newRow[element.dataIndex] = "";
+        newRow[element] = "";
       }
     }
-    console.log(newRow);
     let merged = newData.concat(newRow);
     this.setState({
       data: merged
@@ -141,22 +156,39 @@ class EditableTable extends Component {
     e.preventDefault();
     console.log("hanhandleExportCSV");
   };
-
+  handleNameChange(val) {
+    this.setState({ testDataName: val });
+    if (this.props.handleNameInput) {
+      this.props.handleNameInput(val);
+    }
+  }
   handleSave = e => {
     e.preventDefault();
-    console.log("handle save");
-    const newData = [...this.state.data];
-    console.log(newData);
+    const { columns, data, currentColletionId, testDataName } = this.state;
+    const { currTestData } = this.props;
+    let assignValue = {
+      _id: currTestData._id,
+      name: testDataName || currTestData.name,
+      col_id: currentColletionId,
+      columns: JSON.stringify(columns),
+      datas: JSON.stringify(data)
+    };
+    if (this.props.onSubmit) {
+      this.props.onSubmit(assignValue);
+    }
   };
   render() {
     const { columns, data } = this.state;
     let columnsWithRender = [];
     for (let i = 0; i < columns.length; i++) {
-      let element = columns[i];
+      let column = columns[i];
+      if (column === 'key') {
+        continue;
+      }
       let obj = {
-        title: element.title,
-        dataIndex: element.dataIndex,
-        render: (text, record) => this.renderColumns(text, record, element.key)
+        title: column,
+        dataIndex: column,
+        render: (text, record) => this.renderColumns(text, record, column)
       };
       columnsWithRender = columnsWithRender.concat(obj);
     }
@@ -170,7 +202,7 @@ class EditableTable extends Component {
             {
               editable ?
                 <span>
-                  <a onClick={() => this.save(record.key)}>Save</a>
+                  <a onClick={() => this.ok(record.key)}>Ok</a>
                   <Divider type="vertical" />
                   <Popconfirm title="Sure to cancel?" onConfirm={() => this.cancel(record.key)}>
                     <a>Cancel</a>
@@ -191,39 +223,64 @@ class EditableTable extends Component {
         );
       }
     });
-    const { testDataItem } = this.props;
+    const { currTestData } = this.props;
     return (
       <div>
         <Row gutter={24}>
           <Col span={5}>
             <FormItem {...formItemLayout} required={false} label="名称">
-              <Input value={testDataItem.name}
-                onChange={e => this.props.handleNameInput(e.target.value)}
+              <Input value={currTestData.name}
+                onChange={e => this.handleNameChange(e.target.value)}
                 placeholder="请输入测试数据名称"
               />
             </FormItem>
           </Col>
           <Col span={5}>
             <FormItem {...formItemLayout} required={false} label="范围">
-              <Select value="0" defaultValue="0">
+              <Select value={this.props.currentColletionId || "0"} defaultValue="0" onChange={val => this.handlerApplyCollectionChange(val)}>
                 <Option key="0" value="0">
                   项目所有集合
                 </Option>
+                {
+                  this.props.colList.map(item => {
+                    return (<Option value={item._id} key={item._id}>
+                      {item.name}
+                    </Option>);
+                  })
+                }
               </Select>
             </FormItem>
           </Col>
           <Col span={14}>
             <div>
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAddCol}>添加列</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleDelCol}>删除列</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleAddRow}>添加行</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleImportCSV}>导入csv</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleExportCSV}>导出csv</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="plus" type="primary" onClick={this.handleAddRow}>添加行</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="import" type="primary" onClick={this.handleImportCSV}>导入csv</Button><Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="export" type="primary" onClick={this.handleExportCSV}>导出csv</Button><Divider type="vertical" />
               <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleSave}>保存</Button>
+              <Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="pause" type="primary" onClick={this.handleAddCol}>添加列</Button>
+              <Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="delete" type="danger" onClick={this.handleDelCol}>删除列</Button>
             </div>
           </Col>
         </Row>
         <Table bordered dataSource={data} columns={columnsWithRender} />
+        {this.state.addColumnVisable ? (
+          <Modal
+            title="添加列"
+            visible={this.state.addColumnVisable}
+            onCancel={() => this.setState({ addColumnVisable: false })}
+            footer={null}
+            className="addcatmodal"
+          >
+            <AddColumnForm
+              onCancel={() => this.setState({ addColumnVisable: false })}
+              onSubmit={this.handleAddColumn}
+            />
+          </Modal>)
+          :
+          ('')
+        }
       </div>
     );
   }

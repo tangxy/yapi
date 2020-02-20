@@ -445,6 +445,11 @@ let routerConfig = {
       method: 'get'
     },
     {
+      action: 'listOnly',
+      path: 'list_only',
+      method: 'get'
+    },
+    {
       action: 'getCaseList',
       path: 'case_list',
       method: 'get'
@@ -504,6 +509,17 @@ let routerConfig = {
       path: 'case_env_list',
       method: 'get'
     },
+    {
+      action: 'updateCaseData',
+      path: 'up_test_data',
+      method: 'post'
+    },
+    {
+      action: 'deleteCaseData',
+      path: 'del_test_data',
+      method: 'post'
+    },
+
     {
       action: 'getCaseDataList',
       path: 'case_data_list',

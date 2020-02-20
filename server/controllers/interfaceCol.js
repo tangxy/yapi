@@ -16,7 +16,34 @@ class interfaceColController extends baseController {
     this.interfaceModel = yapi.getInst(interfaceModel);
     this.projectModel = yapi.getInst(projectModel);
   }
-
+  /**
+     * 获取所有接口集
+     * @interface /col/list_only
+     * @method GET
+     * @category col
+     * @foldnumber 10
+     * @param {String} project_id 不能为空
+     * @returns {Object}
+     * @example
+     */
+  async listOnly(ctx) {
+    try {
+      let id = ctx.query.project_id;
+      let project = await this.projectModel.getBaseInfo(id);
+      if (project.project_type === 'private') {
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
+        }
+      }
+      let result = await this.colModel.list(id);
+      let resultSorted = result.sort((a, b) => {
+        return a.name > b.name;
+      });
+      ctx.body = yapi.commons.resReturn(resultSorted);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
   /**
    * 获取所有接口集
    * @interface /col/list
@@ -221,7 +248,100 @@ class interfaceColController extends baseController {
       }
       // 通过col_id 找到 所有测试驱动数据
       let colDataList = await this.colDataModel.list(project_id, col_id, '_id name');
-      ctx.body = yapi.commons.resReturn(colDataList);
+      let colDataListSorted = colDataList.sort((a, b) => {
+        return a.name > b.name;
+      });
+      ctx.body = yapi.commons.resReturn(colDataListSorted);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
+   * 保存或更新测试数据
+   * @interface /col/up_test_data
+   * @method POST
+   * @category col
+   * @param {String} name
+   * @param {Number} col_id
+   * @param {Number} project_id
+   * @param {String} columns
+   * @param {String} datas
+   * @example
+   */
+  async updateCaseData(ctx) {
+    try {
+      let params = ctx.request.body;
+      if (!params.project_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
+      }
+      let auth = await this.checkAuth(params.project_id, 'project', 'danger');
+      if (!auth) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
+      }
+      params.uid = this.getUid();
+      params.add_time = yapi.commons.time();
+      params.up_time = yapi.commons.time();
+      if (params._id) {
+        await this.colDataModel.del(params._id);
+      }
+      let result = await this.colDataModel.save(params);
+      let username = this.getUsername();
+
+      yapi.commons.saveLog({
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 在接口集 <a href="/project/${
+          params.project_id
+          }/interface/col/${params.col_id}">${params.name}</a> 下添加了测试数据 <a href="/project/${
+          params.project_id
+          }/interface/case/${result._id}">${params.name}</a>`,
+        type: 'project',
+        uid: this.getUid(),
+        username: username,
+        typeid: params.project_id
+      });
+      ctx.body = yapi.commons.resReturn(result);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
+   * 删除新测试数据
+   * @interface /col/del_test_data
+   * @method POST
+   * @category col
+   * @param {String} name
+   * @param {Number} case_data_id
+   * @param {Number} project_id
+   * @example
+   */
+  async deleteCaseData(ctx) {
+    try {
+      let params = ctx.request.body;
+      if (!params.project_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
+      }
+      if (!params.case_data_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '测试数据ID不能为空'));
+      }
+      let auth = await this.checkAuth(params.project_id, 'project', 'danger');
+      if (!auth) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
+      }
+      let result = await this.colDataModel.del(params.case_data_id);
+      let username = this.getUsername();
+      yapi.commons.saveLog({
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 在接口集 <a href="/project/${
+          params.project_id
+          }/interface/col/${params.col_id}">${params.name}</a> 下删除了测试数据 <a href="/project/${
+          params.project_id
+          }/interface/case/${result._id}">${params.name}</a>`,
+        type: 'project',
+        uid: this.getUid(),
+        username: username,
+        typeid: params.project_id
+      });
+      ctx.body = yapi.commons.resReturn(result);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }

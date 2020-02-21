@@ -4,9 +4,13 @@ import 'antd/dist/antd.css';
 import './ProjectTestData.scss';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+
 import { Form, Row, Col, Table, Divider, Button, Select, Input, Popconfirm, Modal } from 'antd';
 import AddColumnForm from './AddColumnForm.js';
 import DelColumnForm from './DelColumnForm.js';
+import ImportTestDataForm from './ImportTestDataForm.js';
+import ExportTestDataForm from './ExportTestDataForm.js';
+
 const FormItem = Form.Item;
 const Option = Select.Option;
 
@@ -53,7 +57,9 @@ class EditableTable extends Component {
       testDataName: props.currTestData.name,
       currentColletionId: props.currentColletionId,
       addColumnVisable: false,
-      delColumnVisable: false
+      delColumnVisable: false,
+      importCsvVisable: false,
+      exportCsvVisable: false
     }
   }
   componentWillReceiveProps(nextProps) {
@@ -115,12 +121,12 @@ class EditableTable extends Component {
     const newData = [...this.state.data];
     this.setState({ data: newData.filter(item => item.key !== key) });
   }
-  handleAddCol = e => {
+  handleAddColBtnClick = e => {
     e.preventDefault();
     this.setState({ addColumnVisable: true });
   };
 
-  handleDelCol = e => {
+  handleDelColBtnClick = e => {
     e.preventDefault();
     this.setState({ delColumnVisable: true });
 
@@ -152,7 +158,7 @@ class EditableTable extends Component {
     }
     this.setState({ delColumnVisable: false, columns: columns, data: data });
   }
-  handleAddRow = e => {
+  handleAddRowBtnClick = e => {
     e.preventDefault();
     const newData = [...this.state.data];
     const { columns } = this.state;
@@ -171,13 +177,61 @@ class EditableTable extends Component {
     });
   };
 
-  handleImportCSV = e => {
-    e.preventDefault();
-    console.log("handleImportCSV");
+  handleImportCsv = (csvdata) => {
+    let { columns, data } = this.state;
+    const parse = require('csv-parse/lib/sync')
+    const records = parse(csvdata, {
+      columns: true,
+      skip_empty_lines: true
+    })
+    let newData = [];
+    for (let i = 0; i < records.length; i++) {
+      let row = {};
+      let csvrow = records[i];
+      for (let j = 0; j < columns.length; j++) {
+        if (columns[j] === 'key') {
+          row[columns[j]] = uuidv4();
+        } else {
+          row[columns[j]] = csvrow[columns[j]] || '';
+        }
+      }
+      newData.push(row);
+    }
+    let mergedData = data.concat(newData);
+    this.setState({ importCsvVisable: false, data: mergedData });
   };
-  handleExportCSV = e => {
+
+  handleImportCsvBtnClick = e => {
     e.preventDefault();
-    console.log("hanhandleExportCSV");
+    this.setState({ importCsvVisable: true });
+  };
+  handleExportCSVBtnClick = e => {
+    e.preventDefault();
+    const { columns, data } = this.state;
+    let rows = [];
+    let headers = {};
+    for (let i = 0; i < columns.length; i++) {
+      let column = columns[i];
+      if (column !== 'key') {
+        headers[column] = column;
+      }
+    }
+    rows.push(headers);
+
+    for (let i = 0; i < data.length; i++) {
+      let row = {};
+      for (let j = 0; j < columns.length; j++) {
+        let column = columns[j];
+        if (column !== 'key') {
+          row[column] = data[i][column];
+        }
+      }
+      rows.push(row);
+    }
+    const stringify = require('csv-stringify/lib/sync');
+    let csvdata = stringify(rows);
+    console.log(csvdata);
+    this.setState({ exportCsvVisable: true, csvdata: csvdata });
   };
   handleNameChange(val) {
     this.setState({ testDataName: val });
@@ -185,7 +239,7 @@ class EditableTable extends Component {
       this.props.handleNameInput(val);
     }
   }
-  handleSave = e => {
+  handleSaveBtnClick = e => {
     e.preventDefault();
     const { columns, data, currentColletionId, testDataName } = this.state;
     const { currTestData } = this.props;
@@ -276,14 +330,17 @@ class EditableTable extends Component {
           </Col>
           <Col span={14}>
             <div>
-              <Button className="m-btn btn-save" icon="plus" type="primary" onClick={this.handleAddRow}>添加行</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="import" type="primary" onClick={this.handleImportCSV}>导入csv</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="export" type="primary" onClick={this.handleExportCSV}>导出csv</Button><Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleSave}>保存</Button>
+              <Button className="m-btn btn-save" icon="plus" type="primary" onClick={this.handleAddRowBtnClick}>添加行</Button>
               <Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="pause" type="primary" onClick={this.handleAddCol}>添加列</Button>
+              <Button className="m-btn btn-save" icon="download" type="primary" onClick={this.handleImportCsvBtnClick}>导入csv</Button>
               <Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="delete" type="danger" onClick={this.handleDelCol}>删除列</Button>
+              <Button className="m-btn btn-save" icon="export" type="primary" onClick={this.handleExportCSVBtnClick}>导出csv</Button>
+              <Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleSaveBtnClick}>保存</Button>
+              <Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="pause" type="primary" onClick={this.handleSaveBtnClick}>添加列</Button>
+              <Divider type="vertical" />
+              <Button className="m-btn btn-save" icon="delete" type="danger" onClick={this.handleDelColBtnClick}>删除列</Button>
             </div>
           </Col>
         </Row>
@@ -321,6 +378,39 @@ class EditableTable extends Component {
           :
           ('')
         }
+        {this.state.importCsvVisable ? (
+          <Modal
+            title="导入CSV数据"
+            visible={this.state.importCsvVisable}
+            onCancel={() => this.setState({ importCsvVisable: false })}
+            footer={null}
+            className="addcatmodal"
+          >
+            <ImportTestDataForm
+              onCancel={() => this.setState({ importCsvVisable: false })}
+              onSubmit={this.handleImportCsv}
+            />
+          </Modal>)
+          :
+          ('')
+        }
+        {this.state.exportCsvVisable ? (
+          <Modal
+            title="导出CSV数据"
+            visible={this.state.exportCsvVisable}
+            onCancel={() => this.setState({ exportCsvVisable: false })}
+            footer={null}
+            className="addcatmodal"
+          >
+            <ExportTestDataForm
+              onCancel={() => this.setState({ exportCsvVisable: false })}
+              csvdata={this.state.csvdata}
+            />
+          </Modal>)
+          :
+          ('')
+        }
+
       </div>
     );
   }

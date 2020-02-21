@@ -97,7 +97,7 @@ class Interface extends Component {
 
     return (
       <Layout style={{ minHeight: 'calc(100vh - 156px)', marginLeft: '24px', marginTop: '24px' }}>
-        <Sider style={{ height: '100%' }} width={300}>
+        <Sider style={{ height: '100%', backgroundColor: '#fff' }} width={300}>
           <div className="left-menu">
             <Tabs type="card" className="tabs-large" activeKey={activeKey} onChange={this.onChange}>
               <Tabs.TabPane tab="接口列表" key="api" />
@@ -109,11 +109,11 @@ class Interface extends Component {
                 projectId={this.props.match.params.id}
               />
             ) : (
-              <InterfaceColMenu
-                router={matchPath(this.props.location.pathname, contentRouter)}
-                projectId={this.props.match.params.id}
-              />
-            )}
+                <InterfaceColMenu
+                  router={matchPath(this.props.location.pathname, contentRouter)}
+                  projectId={this.props.match.params.id}
+                />
+              )}
           </div>
         </Sider>
         <Layout>

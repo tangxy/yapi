@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Form, Row, Col, Table, Divider, Button, Select, Input, Popconfirm, Modal } from 'antd';
 import AddColumnForm from './AddColumnForm.js';
+import DelColumnForm from './DelColumnForm.js';
 const FormItem = Form.Item;
 const Option = Select.Option;
 
@@ -42,7 +43,6 @@ class EditableTable extends Component {
     form: PropTypes.object,
     onSubmit: PropTypes.func,
     handleNameInput: PropTypes.func,
-    addColumnVisable: false,
     currentColletionId: PropTypes.number
   };
   constructor(props) {
@@ -51,7 +51,9 @@ class EditableTable extends Component {
       data: props.dataSource,
       columns: props.columns,
       testDataName: props.currTestData.name,
-      currentColletionId: props.currentColletionId
+      currentColletionId: props.currentColletionId,
+      addColumnVisable: false,
+      delColumnVisable: false
     }
   }
   componentWillReceiveProps(nextProps) {
@@ -120,7 +122,8 @@ class EditableTable extends Component {
 
   handleDelCol = e => {
     e.preventDefault();
-    console.log("handleDelCol");
+    this.setState({ delColumnVisable: true });
+
   };
 
   handleAddColumn = (columnName) => {
@@ -128,6 +131,26 @@ class EditableTable extends Component {
     let newColumns = [].concat(columnName);
     newColumns = newColumns.concat(columns);
     this.setState({ addColumnVisable: false, columns: newColumns });
+  }
+
+
+  handleDelColumn = (columnNames) => {
+    let deleteColumnNames = columnNames["checkbox-group"];
+    let { columns, data } = this.state;
+    for (let i = 0; i < deleteColumnNames.length; i++) {
+      for (let j = 0; j < columns.length; j++) {
+        if (columns[j] === deleteColumnNames[i]) {
+          columns.splice(j, 1);
+          j--;
+        }
+      }
+    }
+    for (let i = 0; i < deleteColumnNames.length; i++) {
+      for (let j = 0; j < data.length; j++) {
+        delete data[j][deleteColumnNames[i]];
+      }
+    }
+    this.setState({ delColumnVisable: false, columns: columns, data: data });
   }
   handleAddRow = e => {
     e.preventDefault();
@@ -276,6 +299,23 @@ class EditableTable extends Component {
             <AddColumnForm
               onCancel={() => this.setState({ addColumnVisable: false })}
               onSubmit={this.handleAddColumn}
+            />
+          </Modal>)
+          :
+          ('')
+        }
+        {this.state.delColumnVisable ? (
+          <Modal
+            title="删除列"
+            visible={this.state.delColumnVisable}
+            onCancel={() => this.setState({ delColumnVisable: false })}
+            footer={null}
+            className="addcatmodal"
+          >
+            <DelColumnForm
+              onCancel={() => this.setState({ delColumnVisable: false })}
+              onSubmit={this.handleDelColumn}
+              columns={this.state.columns}
             />
           </Modal>)
           :

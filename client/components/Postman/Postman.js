@@ -95,10 +95,9 @@ const ParamsNameComponent = props => {
     <div>
       {isNull ? (
         <Input disabled value={name} className="key" />
-      ) : (
-          <Tooltip placement="topLeft" title={<TooltipTitle />}>
-            <Input disabled value={name} className="key" />
-          </Tooltip>
+      ) : (<Tooltip placement="topLeft" title={<TooltipTitle />}>
+        <Input disabled value={name} className="key" />
+      </Tooltip>
         )}
     </div>
   );
@@ -737,14 +736,13 @@ export default class Run extends Component {
                   &nbsp;
                   {item.required == 1 ? (
                     <Checkbox className="params-enable" checked={true} disabled />
-                  ) : (
-                      <Checkbox
-                        className="params-enable"
-                        checked={item.enable}
-                        onChange={e =>
-                          this.changeParam('req_query', e.target.checked, index, 'enable')
-                        }
-                      />
+                  ) : (<Checkbox
+                    className="params-enable"
+                    checked={item.enable}
+                    onChange={e =>
+                      this.changeParam('req_query', e.target.checked, index, 'enable')
+                    }
+                  />
                     )}
                   <span className="eq-symbol">=</span>
                   <Input
@@ -863,12 +861,11 @@ export default class Run extends Component {
                         &nbsp;
                         {item.required == 1 ? (
                           <Checkbox className="params-enable" checked={true} disabled />
-                        ) : (
-                            <Checkbox
-                              className="params-enable"
-                              checked={item.enable}
-                              onChange={e => this.changeBody(e.target.checked, index, 'enable')}
-                            />
+                        ) : (<Checkbox
+                          className="params-enable"
+                          checked={item.enable}
+                          onChange={e => this.changeBody(e.target.checked, index, 'enable')}
+                        />
                           )}
                         <span className="eq-symbol">=</span>
                         {item.type === 'file' ? (
@@ -880,20 +877,19 @@ export default class Run extends Component {
                           //   multiple
                           //   className="value"
                           // />
-                        ) : (
-                            <Input
-                              value={item.value}
-                              className="value"
-                              onChange={e => this.changeBody(e.target.value, index)}
-                              placeholder="参数值"
-                              id={`req_body_form_${index}`}
-                              addonAfter={
-                                <Icon
-                                  type="edit"
-                                  onClick={() => this.showModal(item.value, index, 'req_body_form')}
-                                />
-                              }
+                        ) : (<Input
+                          value={item.value}
+                          className="value"
+                          onChange={e => this.changeBody(e.target.value, index)}
+                          placeholder="参数值"
+                          id={`req_body_form_${index}`}
+                          addonAfter={
+                            <Icon
+                              type="edit"
+                              onClick={() => this.showModal(item.value, index, 'req_body_form')}
                             />
+                          }
+                        />
                           )}
                       </div>
                     );

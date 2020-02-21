@@ -56,7 +56,7 @@ class DelColumnForm extends Component {
                 {
                   this.props.columns && this.props.columns.map(item => {
                     return (
-                      <div>
+                      <div key={item}>
                         {item !== "key" ?
                           <Col span={8}>
                             <Checkbox value={item}>{item}</Checkbox>

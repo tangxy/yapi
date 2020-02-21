@@ -132,6 +132,8 @@ export default class Run extends Component {
       inputValue: '',
       cursurPosition: { row: 1, column: -1 },
       envModalVisible: false,
+      test_req_header: null,
+      test_req_body: null,
       test_res_header: null,
       test_res_body: null,
       autoPreviewHTML: true,
@@ -357,6 +359,8 @@ export default class Run extends Component {
       });
 
       result = {
+        request_header: result.req.headers,
+        request_body: result.req.data,
         header: result.res.header,
         body: result.res.body,
         status: result.res.status,
@@ -366,6 +370,8 @@ export default class Run extends Component {
 
     } catch (data) {
       result = {
+        request_header: null,
+        request_body: null,
         header: data.header,
         body: data.body,
         status: null,
@@ -379,7 +385,10 @@ export default class Run extends Component {
     } else {
       return null;
     }
-
+    let tempRequestJson = result.request_body;
+    if (tempRequestJson && typeof tempRequestJson === 'object') {
+      result.request_body = JSON.stringify(tempRequestJson, null, '  ');
+    }
     let tempJson = result.body;
     if (tempJson && typeof tempJson === 'object') {
       result.body = JSON.stringify(tempJson, null, '  ');
@@ -401,6 +410,8 @@ export default class Run extends Component {
     }
 
     this.setState({
+      test_req_header: result.request_header,
+      test_req_body: result.request_body,
       resStatusCode: result.status,
       resStatusText: result.statusText,
       test_res_header: result.header,
@@ -914,6 +925,41 @@ export default class Run extends Component {
         </Collapse>
 
         <Tabs size="large" defaultActiveKey="res" className="response-tab">
+          <Tabs.TabPane tab="Request" key="req">
+            <div className="container-header-body">
+              <div className="header">
+                <div className="container-title">
+                  <h4>Headers</h4>
+                </div>
+                <AceEditor
+                  callback={editor => {
+                    editor.renderer.setShowGutter(false);
+                  }}
+                  readOnly={true}
+                  className="pretty-editor-header"
+                  data={this.state.test_req_header}
+                  mode="json"
+                />
+              </div>
+              <div className="resizer">
+                <div className="container-title">
+                  <h4 style={{ visibility: 'hidden' }}>1</h4>
+                </div>
+              </div>
+              <div className="body">
+                <div className="container-title">
+                  <h4>Body</h4>
+
+                </div>
+                <AceEditor
+                  readOnly={true}
+                  className="pretty-editor-body"
+                  data={this.state.test_req_body}
+                  mode={handleContentType(this.state.test_res_header)}
+                />
+              </div>
+            </div>
+          </Tabs.TabPane>
           <Tabs.TabPane tab="Response" key="res">
             <Spin spinning={this.state.loading}>
               <h2

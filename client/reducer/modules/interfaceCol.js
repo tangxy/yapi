@@ -6,6 +6,10 @@ const FETCH_CASE_LIST = 'yapi/interfaceCol/FETCH_CASE_LIST';
 const SET_COL_DATA = 'yapi/interfaceCol/SET_COL_DATA';
 const FETCH_VARIABLE_PARAMS_LIST = 'yapi/interfaceCol/FETCH_VARIABLE_PARAMS_LIST';
 const FETCH_CASE_ENV_LIST = 'yapi/interfaceCol/FETCH_CASE_ENV_LIST';
+const FETCH_CASE_DATA_LIST = 'yapi/interfaceCol/FETCH_CASE_DATA_LIST';
+const FETCH_CASE_TEST_DATA = 'yapi/interfaceCol/FETCH_CASE_TEST_DATA';
+const SET_CASE_TEST_DATA = 'yapi/interfaceCol/SET_CASE_TEST_DATA';
+const FETCH_COLL_SIMPLE_LIST = 'yapi/interfaceCol/FETCH_COLL_SIMPLE_LIST';
 // Reducer
 const initialState = {
   interfaceColList: [
@@ -27,7 +31,9 @@ const initialState = {
   currCase: {},
   currCaseList: [],
   variableParamsList: [],
-  envList: []
+  envList: [],
+  dataList: [],
+  testData: {}
 };
 
 export default (state = initialState, action) => {
@@ -36,6 +42,12 @@ export default (state = initialState, action) => {
       return {
         ...state,
         interfaceColList: action.payload.data.data
+      };
+    }
+    case FETCH_COLL_SIMPLE_LIST: {
+      return {
+        ...state,
+        colList: action.payload.data.data
       };
     }
     case FETCH_CASE_DATA: {
@@ -50,7 +62,6 @@ export default (state = initialState, action) => {
         currCaseList: action.payload.data.data
       };
     }
-
     case FETCH_VARIABLE_PARAMS_LIST: {
       return {
         ...state,
@@ -69,6 +80,24 @@ export default (state = initialState, action) => {
         envList: action.payload.data.data
       };
     }
+    case FETCH_CASE_DATA_LIST: {
+      return {
+        ...state,
+        dataList: action.payload.data.data
+      };
+    }
+    case FETCH_CASE_TEST_DATA: {
+      return {
+        ...state,
+        testData: action.payload.data.data
+      };
+    }
+    case SET_CASE_TEST_DATA: {
+      return {
+        ...state,
+        testDataAfterSetted: action.payload.data.data
+      };
+    }
     default:
       return state;
   }
@@ -79,6 +108,12 @@ export function fetchInterfaceColList(projectId) {
   return {
     type: FETCH_INTERFACE_COL_LIST,
     payload: axios.get('/api/col/list?project_id=' + projectId)
+  };
+}
+export function fetchColSimpleList(projectId) {
+  return {
+    type: FETCH_COLL_SIMPLE_LIST,
+    payload: axios.get('/api/col/list_only?project_id=' + projectId)
   };
 }
 
@@ -102,6 +137,31 @@ export function fetchCaseEnvList(col_id) {
     payload: axios.get('/api/col/case_env_list', {
       params: { col_id }
     })
+  };
+}
+
+export function fetchCaseDataList(project_id, col_id) {
+  return {
+    type: FETCH_CASE_DATA_LIST,
+    payload: axios.get('/api/col/case_data_list', {
+      params: { project_id, col_id }
+    })
+  };
+}
+
+export function fetchCaseTestData(project_id, case_data_id) {
+  return {
+    type: FETCH_CASE_TEST_DATA,
+    payload: axios.get('/api/col/case_test_data', {
+      params: { project_id, case_data_id }
+    })
+  };
+}
+
+export function updateCaseTestData(params) {
+  return {
+    type: SET_CASE_TEST_DATA,
+    payload: axios.post('/api/col/up_test_data', params)
   };
 }
 

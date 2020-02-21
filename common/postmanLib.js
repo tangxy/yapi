@@ -20,31 +20,31 @@ const ContentTypeMap = {
   other: 'text'
 };
 
-const getStorage = async (id)=>{
-  try{
-    if(isNode){
+const getStorage = async (id) => {
+  try {
+    if (isNode) {
       let storage = global.storageCreator(id);
       let data = await storage.getItem();
       return {
-        getItem: (name)=> data[name],
-        setItem: (name, value)=>{
+        getItem: (name) => data[name],
+        setItem: (name, value) => {
           data[name] = value;
           storage.setItem(name, value)
         }
       }
-    }else{
+    } else {
       return {
-        getItem: (name)=> window.localStorage.getItem(name),
-        setItem: (name, value)=>  window.localStorage.setItem(name, value)
+        getItem: (name) => window.localStorage.getItem(name),
+        setItem: (name, value) => window.localStorage.setItem(name, value)
       }
     }
-  }catch(e){
+  } catch (e) {
     console.error(e)
     return {
-      getItem: (name)=>{
+      getItem: (name) => {
         console.error(name, e)
       },
-      setItem: (name, value)=>{
+      setItem: (name, value) => {
         console.error(name, value, e)
       }
     }
@@ -319,7 +319,7 @@ async function crossRequest(defaultOptions, preScript, afterScript, commonContex
     data.req = options;
   } else {
     data = await new Promise((resolve, reject) => {
-      options.error = options.success = function(res, header, data) {
+      options.error = options.success = function (res, header, data) {
         let message = '';
         if (res && typeof res === 'string') {
           res = json_parse(data.res.body);
@@ -360,7 +360,7 @@ function handleParams(interfaceData, handleValue, requestParams) {
     const obj = {};
     safeArray(arr).forEach(item => {
       if (item && item.name && (item.enable || item.required === '1')) {
-        obj[item.name] = handleValue(item.value, currDomain.global);
+        obj[item.name] = handleValue(item.value, currDomain.global, dataVars);
         if (requestParams) {
           requestParams[item.name] = obj[item.name];
         }
@@ -373,7 +373,7 @@ function handleParams(interfaceData, handleValue, requestParams) {
     const obj = {};
     safeArray(arr).forEach(item => {
       if (item && item.name) {
-        obj[item.name] = handleValue(item.value, currDomain.global);
+        obj[item.name] = handleValue(item.value, currDomain.global, dataVars);
         if (requestParams) {
           requestParams[item.name] = obj[item.name];
         }
@@ -382,14 +382,14 @@ function handleParams(interfaceData, handleValue, requestParams) {
     return obj;
   }
 
-  let { case_env, path, env, _id } = interfaceRunData;
+  let { case_env, path, env, _id, dataVars } = interfaceRunData;
   let currDomain,
     requestBody,
     requestOptions = {};
   currDomain = handleCurrDomain(env, case_env);
   interfaceRunData.req_params = interfaceRunData.req_params || [];
   interfaceRunData.req_params.forEach(item => {
-    let val = handleValue(item.value, currDomain.global);
+    let val = handleValue(item.value, currDomain.global, dataVars);
     if (requestParams) {
       requestParams[item.name] = val;
     }
@@ -456,7 +456,7 @@ function handleParams(interfaceData, handleValue, requestParams) {
         if (requestParams) {
           requestParams = Object.assign(requestParams, reqBody);
         }
-        requestBody = handleJson(reqBody, val => handleValue(val, currDomain.global));
+        requestBody = handleJson(reqBody, val => handleValue(val, currDomain.global, dataVars));
       }
     } else {
       requestBody = interfaceRunData.req_body_other;

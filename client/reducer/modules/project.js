@@ -1,6 +1,6 @@
 import axios from 'axios';
 import variable from '../../constants/variable';
-import {htmlFilter} from '../../common';
+import { htmlFilter } from '../../common';
 
 // Actions
 const FETCH_PROJECT_LIST = 'yapi/project/FETCH_PROJECT_LIST';
@@ -184,6 +184,9 @@ export function getProjectMemberList(id) {
 export function addProject(data) {
   let {
     name,
+    default_request_json,
+    default_request_json_schema,
+    default_response_json_schema,
     prd_host,
     basepath,
     desc,
@@ -199,6 +202,9 @@ export function addProject(data) {
   name = htmlFilter(name);
   const param = {
     name,
+    default_request_json,
+    default_request_json_schema,
+    default_response_json_schema,
     prd_host,
     protocol,
     basepath,
@@ -217,12 +223,15 @@ export function addProject(data) {
 
 // 修改项目
 export function updateProject(data) {
-  let { name, project_type, basepath, desc, _id, env, group_id, switch_notice, strice, is_json5, tag } = data;
-  
+  let { name, default_request_json, default_request_json_schema, default_response_json_schema, project_type, basepath, desc, _id, env, group_id, switch_notice, strice, is_json5, tag } = data;
+
   // 过滤项目名称中有html标签存在的情况
   name = htmlFilter(name);
   const param = {
     name,
+    default_request_json,
+    default_request_json_schema,
+    default_response_json_schema,
     project_type,
     basepath,
     switch_notice,
@@ -332,6 +341,6 @@ export async function checkProjectName(name, group_id) {
 export async function handleSwaggerUrlData(url) {
   return {
     type: GET_SWAGGER_URL_DATA,
-    payload: axios.get('/api/project/swagger_url?url='+url)
+    payload: axios.get('/api/project/swagger_url?url=' + url)
   };
 }

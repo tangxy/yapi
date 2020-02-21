@@ -61,7 +61,7 @@ let routerConfig = {
       method: 'get'
     },
 
-    
+
     {
       action: 'list',
       path: 'list',
@@ -387,6 +387,11 @@ let routerConfig = {
       action: 'schema2json',
       path: 'schema2json',
       method: 'post'
+    },
+    {
+      action: 'schema2jsonRaw',
+      path: 'schema2jsonraw',
+      method: 'post'
     }
   ],
   log: [
@@ -437,6 +442,11 @@ let routerConfig = {
     {
       action: 'list',
       path: 'list',
+      method: 'get'
+    },
+    {
+      action: 'listOnly',
+      path: 'list_only',
       method: 'get'
     },
     {
@@ -498,7 +508,29 @@ let routerConfig = {
       action: 'getCaseEnvList',
       path: 'case_env_list',
       method: 'get'
+    },
+    {
+      action: 'updateCaseData',
+      path: 'up_test_data',
+      method: 'post'
+    },
+    {
+      action: 'deleteCaseData',
+      path: 'del_test_data',
+      method: 'post'
+    },
+
+    {
+      action: 'getCaseDataList',
+      path: 'case_data_list',
+      method: 'get'
+    },
+    {
+      action: 'getCaseTestData',
+      path: 'case_test_data',
+      method: 'get'
     }
+
   ],
   test: [
     {

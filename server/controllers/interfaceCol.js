@@ -246,12 +246,19 @@ class interfaceColController extends baseController {
           return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
         }
       }
+      let mergedTestData = [];
       // 通过col_id 找到 所有测试驱动数据
       let colDataList = await this.colDataModel.list(project_id, col_id, '_id name');
-      let colDataListSorted = colDataList.sort((a, b) => {
+      mergedTestData = mergedTestData.concat(colDataList);
+      // 如果查询集合ID不为空，则追加查询使用全项目的数据集
+      if (col_id > 0) {
+        let testDataForAllList = await this.colDataModel.list(project_id, 0, '_id name');
+        mergedTestData = mergedTestData.concat(testDataForAllList);
+      }
+      let mergedTestDataSorted = mergedTestData.sort((a, b) => {
         return a.name > b.name;
       });
-      ctx.body = yapi.commons.resReturn(colDataListSorted);
+      ctx.body = yapi.commons.resReturn(mergedTestDataSorted);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }

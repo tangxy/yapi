@@ -67,11 +67,6 @@ export default class CaseData extends React.Component {
                       {item.name}
                     </Option>);
                   })}
-                  <Option value="测试数据配置" disabled style={{ cursor: 'pointer', color: '#2395f1' }}>
-                    <Button type="primary" onClick={console.log("click 测试数据配置")}>
-                      测试数据配置
-                    </Button>
-                  </Option>
                 </Select>
               </div>
             )}

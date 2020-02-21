@@ -650,14 +650,11 @@ class InterfaceColContent extends Component {
 
   handleCommonSetting = () => {
     let setting = this.state.commonSetting;
-
     let params = {
       col_id: this.props.currColId,
       ...setting
 
     };
-    console.log(params)
-
     axios.post('/api/col/up_col', params).then(async res => {
       if (res.data.errcode) {
         return message.error(res.data.errmsg);

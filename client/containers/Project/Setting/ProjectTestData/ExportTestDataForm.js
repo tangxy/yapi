@@ -14,9 +14,6 @@ class ExportTestDataForm extends Component {
     onCancel: PropTypes.func
   }
   render() {
-    const formLayout = {
-
-    }
     const formItemLayout = {
       labelCol: {
         xs: { span: 24 },

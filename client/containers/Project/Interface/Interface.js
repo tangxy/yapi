@@ -108,11 +108,10 @@ class Interface extends Component {
                 router={matchPath(this.props.location.pathname, contentRouter)}
                 projectId={this.props.match.params.id}
               />
-            ) : (
-                <InterfaceColMenu
-                  router={matchPath(this.props.location.pathname, contentRouter)}
-                  projectId={this.props.match.params.id}
-                />
+            ) : (<InterfaceColMenu
+              router={matchPath(this.props.location.pathname, contentRouter)}
+              projectId={this.props.match.params.id}
+            />
               )}
           </div>
         </Sider>

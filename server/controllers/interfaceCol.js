@@ -282,7 +282,7 @@ class interfaceColController extends baseController {
       if (!params.project_id) {
         return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
       }
-      let auth = await this.checkAuth(params.project_id, 'project', 'danger');
+      let auth = await this.checkAuth(params.project_id, 'project', 'edit');
       if (!auth) {
         return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
       }

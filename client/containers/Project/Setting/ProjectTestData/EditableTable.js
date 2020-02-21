@@ -28,6 +28,8 @@ const formItemLayout = {
   },
   className: 'form-item'
 };
+
+// eslint-disable-next-line react/prop-types
 const EditableCell = ({ editable, value, onChange }) => (
   <div>
     {editable

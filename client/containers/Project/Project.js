@@ -166,8 +166,7 @@ export default class Project extends Component {
               this.props.currGroup.type !== 'private' ? (
                 <Route path={item.path} component={item.component} key={key} />
               ) : null
-            ) : (
-                <Route path={item.path} component={item.component} key={key} />
+            ) : (<Route path={item.path} component={item.component} key={key} />
               );
           })}
         </Switch>

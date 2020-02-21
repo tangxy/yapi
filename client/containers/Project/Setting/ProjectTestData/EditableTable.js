@@ -179,7 +179,7 @@ class EditableTable extends Component {
 
   handleImportCsv = (csvdata) => {
     let { columns, data } = this.state;
-    const parse = require('csv-parse/lib/sync')
+    const parse = require('csv-parse/lib/es5/sync')
     const records = parse(csvdata, {
       columns: true,
       skip_empty_lines: true
@@ -228,7 +228,7 @@ class EditableTable extends Component {
       }
       rows.push(row);
     }
-    const stringify = require('csv-stringify/lib/sync');
+    const stringify = require('csv-stringify/lib/es5/sync');
     let csvdata = stringify(rows);
     console.log(csvdata);
     this.setState({ exportCsvVisable: true, csvdata: csvdata });
@@ -338,7 +338,7 @@ class EditableTable extends Component {
               <Divider type="vertical" />
               <Button className="m-btn btn-save" icon="save" type="primary" onClick={this.handleSaveBtnClick}>保存</Button>
               <Divider type="vertical" />
-              <Button className="m-btn btn-save" icon="pause" type="primary" onClick={this.handleSaveBtnClick}>添加列</Button>
+              <Button className="m-btn btn-save" icon="pause" type="primary" onClick={this.handleAddColBtnClick}>添加列</Button>
               <Divider type="vertical" />
               <Button className="m-btn btn-save" icon="delete" type="danger" onClick={this.handleDelColBtnClick}>删除列</Button>
             </div>

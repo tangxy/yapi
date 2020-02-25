@@ -114,6 +114,7 @@ class InterfaceColContent extends Component {
     fetchCaseTestData: PropTypes.func,
     envList: PropTypes.array,
     dataList: PropTypes.array,
+    testData: PropTypes.object,
     curUid: PropTypes.number
   };
 
@@ -264,7 +265,7 @@ class InterfaceColContent extends Component {
     }
     await this.props.fetchCaseTestData(this.props.match.params.id, this.props.dataIdx);
     try {
-      let dataRows = JSON.parse(this.state.testData.datas);
+      let dataRows = JSON.parse(this.props.testData.datas);
       return dataRows;
     } catch (e) {
       console.error(e);

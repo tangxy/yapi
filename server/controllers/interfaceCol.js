@@ -1,4 +1,5 @@
 const interfaceColModel = require('../models/interfaceCol.js');
+const interfaceColReportModel = require('../models/interfaceColReport.js');
 const interfaceColDataModel = require('../models/interfaceColData.js');
 const interfaceCaseModel = require('../models/interfaceCase.js');
 const interfaceModel = require('../models/interface.js');
@@ -12,6 +13,7 @@ class interfaceColController extends baseController {
     super(ctx);
     this.colModel = yapi.getInst(interfaceColModel);
     this.colDataModel = yapi.getInst(interfaceColDataModel);
+    this.colReportModel = yapi.getInst(interfaceColReportModel);
     this.caseModel = yapi.getInst(interfaceCaseModel);
     this.interfaceModel = yapi.getInst(interfaceModel);
     this.projectModel = yapi.getInst(projectModel);
@@ -876,8 +878,22 @@ class interfaceColController extends baseController {
       if (!auth) {
         return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
       }
+
+      let result = await this.colReportModel.save({
+        name: colData.name,
+        project_id: colData.project_id,
+        desc: colData.desc,
+        uid: this.getUid(),
+        test_report: params.test_report,
+        col_id: params.col_id,
+        data_idx: params.data_idx,
+        row_idx: params.row_idx,
+        variables: params.variables,
+        add_time: yapi.commons.time(),
+        up_time: yapi.commons.time()
+      });
       delete params.col_id;
-      let result = await this.colModel.up(id, params);
+      result = await this.colModel.up(id, params);
       let username = this.getUsername();
       yapi.commons.saveLog({
         content: `<a href="/user/profile/${this.getUid()}">${username}</a> 更新了测试集合 <a href="/project/${

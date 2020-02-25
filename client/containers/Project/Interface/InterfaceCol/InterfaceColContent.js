@@ -263,6 +263,7 @@ class InterfaceColContent extends Component {
     if (this.props.dataIdx === 0) {
       return [{}];
     }
+
     await this.props.fetchCaseTestData(this.props.match.params.id, this.props.dataIdx);
     try {
       let dataRows = JSON.parse(this.props.testData.datas);
@@ -333,7 +334,10 @@ class InterfaceColContent extends Component {
       await this.executeOneTests(dataRows[rowIdx]);
       await axios.post('/api/col/up_col', {
         col_id: this.props.currColId,
-        test_report: JSON.stringify(this.reports)
+        test_report: JSON.stringify(this.reports),
+        data_idx: this.props.dataIdx,
+        row_idx: rowIdx,
+        variables: JSON.stringify(dataRows[rowIdx])
       });
     }
   };

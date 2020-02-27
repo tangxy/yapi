@@ -11,10 +11,13 @@ class interfaceColReport extends baseModel {
       name: { type: String, required: true },
       uid: { type: Number, required: true },
       project_id: { type: Number, required: true },
+      task_id: { type: String },
+      runner: { type: String },
       col_id: { type: Number },
       data_idx: { type: Number },
       row_idx: { type: Number },
       variables: { type: String },
+      test_result: { type: String, default: '200' },
       desc: String,
       add_time: Number,
       up_time: Number,
@@ -77,12 +80,32 @@ class interfaceColReport extends baseModel {
     });
   }
 
-  list(project_id) {
+  list(col_id) {
     return this.model
       .find({
-        project_id: project_id
+        col_id: col_id
       })
-      .select('name uid project_id col_id desc add_time up_time, index')
+      .select('task_id data_idx row_idx test_result runner name uid project_id col_id desc add_time up_time, index')
+      .exec();
+  }
+
+  listCountByCol(col_id) {
+    return this.model.countDocuments({
+      col_id: col_id
+    });
+  }
+
+  listWithPagingByCol(col_id, page, limit) {
+    page = parseInt(page);
+    limit = parseInt(limit);
+    return this.model
+      .find({
+        col_id: col_id
+      })
+      .select('task_id data_idx row_idx test_result runner name uid project_id col_id desc add_time up_time, index')
+      .sort({ add_time: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .exec();
   }
 

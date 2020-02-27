@@ -529,8 +529,17 @@ let routerConfig = {
       action: 'getCaseTestData',
       path: 'case_test_data',
       method: 'get'
+    },
+    {
+      action: 'getColTestReportList',
+      path: 'col_test_report_list',
+      method: 'get'
+    },
+    {
+      action: 'getColTestReport',
+      path: 'col_test_report',
+      method: 'get'
     }
-
   ],
   test: [
     {

@@ -391,6 +391,80 @@ class interfaceColController extends baseController {
     }
   }
 
+  /**
+    * 获取一个测试集合的测试记录列表
+    * @interface /col/col_test_report
+    * @method GET
+    * @category col
+    * @foldnumber 10
+    * @param {String} project_id 测试数据ID
+    * @param {Number} col_id 测试数据ID
+    * @returns {Object}
+    * @example
+    */
+  async getColTestReport(ctx) {
+    try {
+      let project_id = ctx.query.project_id;
+      let _id = ctx.query.id;
+      if (!project_id || project_id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'project_id不能为空'));
+      }
+      if (!_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, '_id不能为空'));
+      }
+      let project = await this.projectModel.getBaseInfo(project_id);
+      if (project.project_type === 'private') {
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
+        }
+      }
+      let colReport = await this.colReportModel.get(_id);
+      ctx.body = yapi.commons.resReturn(colReport);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
+  * 获取一个测试集合的测试记录列表
+  * @interface /col/col_test_report_list
+  * @method GET
+  * @category col
+  * @foldnumber 10
+  * @param {String} project_id 测试数据ID
+  * @param {Number} col_id 测试数据ID
+  * @returns {Object}
+  * @example
+  */
+  async getColTestReportList(ctx) {
+    try {
+      let project_id = ctx.query.project_id;
+      let col_id = ctx.query.col_id;
+      if (!project_id || project_id == 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'project_id不能为空'));
+      }
+      if (!col_id) {
+        return (ctx.body = yapi.commons.resReturn(null, 407, 'col_id不能为空'));
+      }
+      let project = await this.projectModel.getBaseInfo(project_id);
+      if (project.project_type === 'private') {
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
+        }
+      }
+      // 通过case_data_id 找到测试驱动数据
+      let colReportCount = await this.colReportModel.listCountByCol(col_id);
+      let colReportList = await this.colReportModel.listWithPagingByCol(col_id, ctx.query.page || 1, 10);
+      ctx.body = yapi.commons.resReturn({
+        colReportCount: colReportCount,
+        colReportList: colReportList
+      });
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+
   requestParamsToObj(arr) {
     if (!arr || !Array.isArray(arr) || arr.length === 0) {
       return {};
@@ -885,6 +959,8 @@ class interfaceColController extends baseController {
         desc: colData.desc,
         uid: this.getUid(),
         test_report: params.test_report,
+        task_id: params.task_id,
+        runner: params.runner,
         col_id: params.col_id,
         data_idx: params.data_idx,
         row_idx: params.row_idx,

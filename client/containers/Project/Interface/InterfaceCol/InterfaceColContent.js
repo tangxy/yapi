@@ -3,15 +3,17 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 //import constants from '../../../../constants/variable.js'
-import { Tooltip, Icon, Input, Button, Row, Col, Spin, Modal, message, Select, Switch } from 'antd';
+import { Tooltip, Icon, Input, Button, Row, Col, Spin, Modal, message, Select, Switch, Divider } from 'antd';
 import {
   fetchInterfaceColList,
   fetchCaseList,
   setColData,
   fetchCaseEnvList,
   fetchCaseDataList,
-  fetchCaseTestData
+  fetchCaseTestData,
+  fetchColTestReportList
 } from '../../../../reducer/modules/interfaceCol';
 import HTML5Backend from 'react-dnd-html5-backend';
 import { getToken, getEnv } from '../../../../reducer/modules/project';
@@ -26,7 +28,7 @@ import _ from 'underscore';
 import { initCrossRequest } from 'client/components/Postman/CheckCrossInstall.js';
 import produce from 'immer';
 import { InsertCodeMap } from 'client/components/Postman/Postman.js'
-
+import ColReports from './ColReports.js'
 const plugin = require('client/plugin.js');
 const {
   handleParams,
@@ -66,6 +68,7 @@ function handleReport(json) {
       isShowCol: state.interfaceCol.isShowCol,
       isRander: state.interfaceCol.isRander,
       currCaseList: state.interfaceCol.currCaseList,
+      testReportList: state.interfaceCol.testReportList,
       currProject: state.project.currProject,
       token: state.project.token,
       envList: state.interfaceCol.envList,
@@ -84,7 +87,8 @@ function handleReport(json) {
     getEnv,
     fetchCaseEnvList,
     fetchCaseDataList,
-    fetchCaseTestData
+    fetchCaseTestData,
+    fetchColTestReportList
   }
 )
 @withRouter
@@ -112,10 +116,12 @@ class InterfaceColContent extends Component {
     fetchCaseEnvList: PropTypes.func,
     fetchCaseDataList: PropTypes.func,
     fetchCaseTestData: PropTypes.func,
+    fetchColTestReportList: PropTypes.func,
     envList: PropTypes.array,
     dataList: PropTypes.array,
     testData: PropTypes.object,
-    curUid: PropTypes.number
+    curUid: PropTypes.number,
+    testReportList: PropTypes.object
   };
 
   constructor(props) {
@@ -123,6 +129,7 @@ class InterfaceColContent extends Component {
     this.reports = {};
     this.records = {};
     this.state = {
+      currentPageIdx: 1,
       rows: [],
       reports: {},
       visible: false,
@@ -179,6 +186,7 @@ class InterfaceColContent extends Component {
     await this.props.fetchCaseList(newColId);
     await this.props.fetchCaseEnvList(newColId);
     await this.props.fetchCaseDataList(this.props.match.params.id, newColId);
+    await this.props.fetchColTestReportList(this.props.match.params.id, newColId, 1);
     this.changeCollapseClose();
     this.handleColdata(this.props.currCaseList);
   }
@@ -329,17 +337,21 @@ class InterfaceColContent extends Component {
   }
 
   executeTests = async () => {
+    let task_id = uuidv4();
     let dataRows = await this.getTestDriveData();
     for (let rowIdx = 0; rowIdx < dataRows.length; rowIdx++) {
       await this.executeOneTests(dataRows[rowIdx]);
       await axios.post('/api/col/up_col', {
+        task_id: task_id,
+        runner: 'browser',
         col_id: this.props.currColId,
         test_report: JSON.stringify(this.reports),
         data_idx: this.props.dataIdx,
-        row_idx: rowIdx,
+        row_idx: rowIdx + 1,
         variables: JSON.stringify(dataRows[rowIdx])
       });
     }
+    await this.props.fetchColTestReportList(this.props.match.params.id, this.props.currColId);
   };
 
   handleTest = async interfaceData => {
@@ -569,6 +581,10 @@ class InterfaceColContent extends Component {
   handleAdvCancel = () => {
     this.setState({ advVisible: false });
   };
+  onShowSizeChange = async (current) => {
+    await this.props.fetchColTestReportList(this.props.match.params.id, this.props.currColId, current);
+    this.setState({ currentPageIdx: current });
+  }
 
   handleAdvOk = async () => {
     const { curCaseid, enableScript, curScript } = this.state;
@@ -1157,6 +1173,13 @@ class InterfaceColContent extends Component {
             onRow={this.onRow}
           />
         </Table.Provider>
+        <Divider orientation="left">测试历史记录</Divider>
+        <ColReports
+          dataSource={this.props.testReportList.colReportList}
+          dataCount={this.props.testReportList.colReportCount}
+          currentPageIdx={this.state.currentPageIdx}
+          onShowSizeChange={this.onShowSizeChange}
+        />
         <Modal
           title="测试报告"
           width="900px"
